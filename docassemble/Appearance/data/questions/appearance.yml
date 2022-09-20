@@ -2,9 +2,12 @@ metadata:
   title: Appearance
   short title: Appearance
   comment: This program helps you tell the court and the other parties that you are participating in a court case.
+  authors:
+    - Matt Newsted
 ---
 include:
   - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.ALToolbox:phone-number-validation.yml  
   - docassemble.ILAO:ilao-interview-framework.yml
   - docassemble.ILAO:shared-basic-questions.yml
 ---
@@ -32,7 +35,7 @@ code: |
   form_name = "Appearance"
   sees_nav_bar
   set_progress(5)
-  instructions
+  how_to_use
   whats_next
   accept_terms
   nav.set_section('review_answers')
@@ -83,11 +86,11 @@ subquestion: |
 
   This program creates a form that tells the court and the other parties that you are participating in a court case.
   
-  Learn about [responding to a lawsuit](https://www.illinoislegalaid.org/node/32236).
+  Learn about [**responding to a lawsuit**](https://www.illinoislegalaid.org/node/32236).
 field: sees_nav_bar
 ---
 id: instructions
-continue button field: instructions
+continue button field: how_to_use
 question: |
   Instructions
 subquestion: |
@@ -103,7 +106,7 @@ subquestion: |
  
   ${ collapse_template(help_example) }  
 
-  Click on **{green words :question-circle:}** to learn what they mean.
+  Click on **{green words}** to learn what they mean. Some questions have a question mark in a circle ${ fa_icon("question-circle", color_css="#0dcaf0" ) } that also gives help.
 ---
 template: help_example
 subject: |
@@ -116,7 +119,7 @@ continue button field: whats_next
 question: |
   After you finish this program
 subquestion: |
-  After you download your ${ form_name }, you must file it with the court. This program does not file your ${ form_name } for you.
+  After you download your **{Appearance}**, you must file it with the court. This program does not file your ${ form_name } for you.
   
   Read the "How to File an Appearance" instructions you can download at the end of this program. 
 ---
@@ -131,7 +134,7 @@ subquestion: |
   ${ collapse_template(get_legal_help) }  
 
 fields:
-  - To continue, you must accept the [terms of use](https://www.illinoislegalaid.org/about/terms-of-use).: accept
+  - To continue, you must accept the [**terms of use**](https://www.illinoislegalaid.org/about/terms-of-use).: accept
     datatype: checkboxes
     none of the above: False
     minlength: 1
@@ -148,18 +151,18 @@ subject: |
 content: |  
   If you have questions or concerns about your legal problem and want legal advice you should talk to a lawyer.
   
-  Use [Get Legal Help](https://www.illinoislegalaid.org/get-legal-help) to find free or low-cost legal services in your area.
+  Use [**Get Legal Help**](https://www.illinoislegalaid.org/get-legal-help) to find free or low-cost legal services in your area.
 ---
 id: not legal advice
 event: not_legal_advice
 question: |
   Sorry
 subquestion: |
-  You cannot continue unless you understand this program does not give legal advice and accept the [terms of use](https://www.illinoislegalaid.org/about/terms-of-use).
+  You cannot continue unless you understand this program does not give legal advice and accept the [**terms of use**](https://www.illinoislegalaid.org/about/terms-of-use).
 
   This program will only help you complete the legal documents you want. By providing this program we are not giving you legal advice. Your use of this program does not mean that Illinois Legal Aid Online will provide you with a lawyer or with any individual legal help.
 
-  If you have questions or concerns about your legal problem and want legal advice you should talk to a lawyer. If you would like help finding free or low-cost legal services in your area, use [Get Legal Help](https://www.illinoislegalaid.org/get-legal-help).
+  If you have questions or concerns about your legal problem and want legal advice you should talk to a lawyer. If you would like help finding free or low-cost legal services in your area, use [**Get Legal Help**](https://www.illinoislegalaid.org/get-legal-help).
 
 buttons:
   - Exit: exit
@@ -170,15 +173,15 @@ continue button field: lawsuit_information
 question: |
   Lawsuit information
 subquestion: |
-  If you received a Complaint and Summons, you have been sued. You need to tell the court you want to participate in your case. In some cases, you need to file an **{Answer :question-circle:}** to respond to the Complaint.
+  If you received a Complaint and Summons, you have been sued. You need to tell the court you want to participate in your case. In some cases, you need to file an **{Answer}** to respond to the Complaint.
   
-  If you do not respond, you can be found in default, and the court can rule against you. In some cases, like evictions, you do not need to file an Appearance. Instead, you can attend your court hearing.
+  If you do not respond, you can be found in default, and the court can rule against you. In some cases, like evictions, you do not need to file an **{Appearance}**. Instead, you can attend your court hearing.
   
-  Learn more about [Responding to a lawsuit](https://www.illinoislegalaid.org/node/32236).
+  Learn more about [**responding to a lawsuit**](https://www.illinoislegalaid.org/node/32236).
   
   ${ collapse_template(started_lawsuit_help) }  
   
-  If you would like help finding free or low-cost legal services in your area, use [Get Legal Help](https://www.illinoislegalaid.org/get-legal-help).
+  If you would like help finding free or low-cost legal services in your area, use [**Get Legal Help**](https://www.illinoislegalaid.org/get-legal-help).
 ---
 template: started_lawsuit_help
 subject: |
@@ -278,17 +281,41 @@ question: |
   In which county was this case filed?
 fields:
   - no label: trial_court_index
+    datatype: integer
     code: |
-      #court_list.filter_courts(allowed_courts, column='department')
-      court_list._load_courts()['address_county'].items()
+      court_county_lookup()
+#fields:
+#  - no label: trial_court_index
+#    code: |
+#      court_list._load_courts()['address_county'].items()
+---
+code: |
+  def court_county_lookup(lowercase=False):
+    all_court_counties = court_list._load_courts()['address_county'].items()
+    filtered_courts = [(-1, "cook")] if lowercase else [(-1, "Cook")]
+    for court in all_court_counties:
+      if court[1] != "Cook":
+        court_name = court[1].lower() if lowercase else court[1]
+        filtered_courts.append((court[0],court_name))
+    return sorted( filtered_courts, key=lambda y: y[1])
+
+# old code
+#  def court_county_lookup():
+#    all_court_counties = court_list._load_courts()['address_county'].items()
+#    filtered_courts = [(-1, "Cook")]
+#    for court in all_court_counties:
+#      if court[1] != "Cook":
+#        filtered_courts.append(court)
+#    return sorted( filtered_courts, key=lambda y: y[1])
 ---
 depends on:
   - trial_court_index
 code: |
-  trial_court = court_list.as_court('trial_court', trial_court_index)
-  # work around: use assignment instead of this variable
-  #trial_court.geolocate()
-  # use this in the attachment block: trial_court.address.county
+  if trial_court_index == -1:
+    trial_court = court_list.as_court('trial_court', 15)
+    trial_court.address.county = "Cook"
+  else:
+    trial_court = court_list.as_court('trial_court', trial_court_index)
 ---
 id: case number
 question: |
@@ -325,6 +352,7 @@ question: |
   What is your phone number?
 fields:
   - Phone: users[0].phone_number
+    datatype: al_international_phone
     required: False
 ---
 id: notice by email
@@ -353,9 +381,22 @@ question: |
   Do you want to add your e-signature to your ${ form_name }?
 subquestion: |
   If you do not add your e-signature, you can sign your paper form later.
+
+  ${ collapse_template(signature_help) }  
 fields:
   - "Add e-signature?": e_signature
     datatype: yesnoradio
+---
+template: signature_help
+subject: |
+  **What does it mean to sign the *Appearance*?**
+content: |  
+  By signing your *Appearance*, you are certifying that:
+  
+  * Everything on the form is true and correct, and
+  * You understand that making a false statement on the form is perjury.
+
+  See the **[Code of Civil Procedure, 735 ILCS 5/1-109](https://www.ilga.gov/legislation/ilcs/documents/073500050k1-109.htm)**, for more information.
 ---
 reconsider: True
 code: |
@@ -483,7 +524,7 @@ template: efiling_help
 subject: |
   **What if I need help?**
 content: |  
-  If you need help delivering by email or using the e-filing service provider, you can visit a [Legal Self-Help Center](https://www.illinoislegalaid.org/get-legal-help/lshc-directory) or you can call or text [Illinois Court Help](https://www.ilcourthelp.gov) at 833-411-1121.
+  If you need help delivering by email or using the e-filing service provider, you can visit a [**Legal Self-Help Center**](https://www.illinoislegalaid.org/get-legal-help/lshc-directory) or you can call or text [**Illinois Court Help**](https://www.ilcourthelp.gov) at 833-411-1121.
 ---
 id: other party delivery method
 # generic object: ALIndividual
@@ -557,7 +598,7 @@ subquestion: |
   
   Your forms are ready. View and download your forms below. Click **Make changes** to fix any mistakes.
 
-  This program does not file your Appearance with the court or deliver it to other parties in your case. You will need to do this yourself. Learn about [e-filing in Illinois](https://www.illinoiscourts.gov/eservices/efileil/).
+  This program does not file your Appearance with the court or deliver it to other parties in your case. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/efileil/).
 
   ${ action_button_html(url_action('review_answers'), label=':edit: Make changes', color='success', size="md") }
   
@@ -567,12 +608,12 @@ subquestion: |
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
 
-  **Note:** This program does not file your Appearance with the court or deliver it to other parties in your case. Learn about [e-filing in Illinois](https://www.illinoiscourts.gov/eservices/efileil/).
+  **Note:** This program does not file your Appearance with the court or deliver it to other parties in your case. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/efileil/).
   
   Thank you for using ILAO Easy Forms!
 under: |
   % if not user_logged_in():
-  [${fa_icon("sign-in-alt", color="#0079d0", size="sm")} Sign-in](${url_of('login', next=interview_url())}) or [register](${url_of('register', next=interview_url())}) an ILAO Easy Form account to save your progress (optional).
+  [${fa_icon("sign-in-alt", color="#0079d0", size="sm")} **Sign-in**](${url_of('login', next=interview_url())}) or [**create**](${url_of('register', next=interview_url())}) an ILAO Easy Form account to save your progress (optional).
   % endif 
 
   &nbsp;
@@ -909,14 +950,14 @@ review:
       % endif
   - Edit: users.revisit
     button: |
-      **Your party: (Edit to change names, lawyers, and delivery info)**
+      **Your party: (Edit to change name, lawyer, address, and delivery info)**
 
       % for my_var in users:
         * ${ my_var.name.full(middle="full") }
       % endfor
   - Edit: other_parties.revisit
     button: |
-      **The other party: (Edit to change names, lawyers, and delivery info)**
+      **The other party: (Edit to change name, lawyer, address, and delivery info)**
 
       % for my_var in other_parties:
         * ${ my_var.name.full(middle="full") }
@@ -927,7 +968,7 @@ review:
         - trial_court
     button: |
       **County where this case is filed:**
-      ${ trial_court }
+      ${ trial_court.address.county }
   - Edit: case_number
     button: |
       **Case number:**
@@ -1029,7 +1070,7 @@ rows: users
 columns:
   - Name: |
       row_item.name.full(middle="full") if defined("row_item.name.first") else ""
-  - Party, lawyer, and delivery info: |
+  - Party, lawyer, address, and delivery info: |
       action_button_html(url_action(row_item.attr_name("review_delivery")), label="Edit", icon="pencil-alt") #if not row_item == users[0] else ""
 #edit:
 #  - name.first
@@ -1053,7 +1094,7 @@ rows: other_parties
 columns:
   - Name: |
       row_item.name.full(middle="full") if defined("row_item.name.first") else ""
-  - Party, lawyer, and delivery info: |
+  - Party, lawyer, address, and delivery info: |
       action_button_html(url_action(row_item.attr_name("review_delivery")), label="Edit", icon="pencil-alt")
 delete buttons: True
 confirm: True
