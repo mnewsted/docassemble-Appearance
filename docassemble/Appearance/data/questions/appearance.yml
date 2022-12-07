@@ -27,6 +27,7 @@ code: |
   form_name = "Appearance"
   github_user = 'IllinoisLegalAidOnline'
   github_repo_name = 'docassemble-Appearance'
+  allowed_courts = ['Circuit']
 ---
 # Road map
 sections:
@@ -284,9 +285,6 @@ fields:
   - code: |
       other_parties[i].name_fields(person_or_business='unsure')
 ---
-code: |
-  allowed_courts = ['Circuit']
----
 id: trial court county
 continue button field: case_county
 question: |
@@ -494,6 +492,32 @@ fields:
       states_list()
     default: IL      
   - ZIP code: x.address.zip
+---
+#added to remove same as / someplace else default in ql_baseline.yml
+id: users delivery party address
+sets:
+  - users[i].address.address
+  - users[i].address.city
+  - users[i].address.zip
+generic object: ALIndividual
+question: |
+  % if users[i].is_represented:
+  What is ${ users[i].lawyer.name.full(middle="full") }'s address?
+  % else:
+  What is ${ users[i].name.full(middle="full") }'s address?
+  % endif
+fields:
+  - Street address: users[i].address.address
+    address autocomplete: True
+  - Address line 2: users[i].address.unit
+    required: False
+  - City: users[i].address.city
+  - State: users[i].address.state
+    code: |
+      states_list()
+    default: IL      
+  - ZIP code: users[i].address.zip
+
 ---
 id: knows delivery method
 generic object: ALIndividual
@@ -1179,7 +1203,7 @@ review:
 id: delivery info review screen
 event: section_delivery
 question: |
-  Delivery info
+  Delivery details
 subquestion: |
   Edit your answers below.
 review:
