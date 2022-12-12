@@ -43,6 +43,7 @@ mandatory: True
 code: |
   nav.set_section('section_intro')
   sees_nav_bar
+  efiling_pilot
   how_to_use
   set_progress(5)
   whats_next
@@ -101,6 +102,16 @@ subquestion: |
   
   Learn about [**responding to a lawsuit**](https://www.illinoislegalaid.org/node/32236).
 field: sees_nav_bar
+---
+id: e-filing pilot
+continue button field: efiling_pilot
+question: |
+  E-filing option
+subquestion: |
+  If you plan to e-file your **{Appearance}**, you can use our [**Appearance with e-filing**](  https://www.illinoislegalaid.org/legal-information/appearance-e-filing) program.
+  
+  **Note:** You must also file a Fee waiver at the same time to use the ILAO e-filing program.
+
 ---
 id: instructions
 continue button field: how_to_use
