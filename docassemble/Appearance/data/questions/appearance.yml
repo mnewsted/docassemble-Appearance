@@ -148,27 +148,28 @@ subquestion: |
   
   Read the "How to File an Appearance" instructions you can download at the end of this program. 
 ---
-id: accept terms
-question: |
-  Terms of use
-subquestion: |
-  This program does not provide legal advice. It does not take the place of advice from a lawyer.
-
-  Using this program does not create an attorney-client relationship between you and Illinois Legal Aid Online or its employees.
-
-  ${ collapse_template(get_legal_help) }  
-
-fields:
-  - To continue, you must accept the [**terms of use**](https://www.illinoislegalaid.org/about/terms-of-use).: accept
-    datatype: checkboxes
-    none of the above: False
-    minlength: 1
-    choices:
-      - I accept the terms of use.
-    validation messages:
-      minlength: |
-        You cannot continue unless you agree to the terms of use. 
-continue button field: accept_terms
+# question replaced with ILAO framework version
+#id: accept terms
+#question: |
+#  Terms of use
+#subquestion: |
+#  This program does not provide legal advice. It does not take the place of advice from a lawyer.
+#
+#  Using this program does not create an attorney-client relationship between you and Illinois Legal Aid Online or its employees.
+#
+#  ${ collapse_template(get_legal_help) }  
+#
+#fields:
+#  - To continue, you must accept the [**terms of use**](https://www.illinoislegalaid.org/about/terms-of-use).: accept
+#    datatype: checkboxes
+#    none of the above: False
+#    minlength: 1
+#    choices:
+#      - I accept the terms of use.
+#    validation messages:
+#      minlength: |
+#        You cannot continue unless you agree to the terms of use. 
+#continue button field: accept_terms
 ---
 template: get_legal_help
 subject: |
@@ -448,9 +449,9 @@ continue button field: extra_delivery_forms
 question: |
   Additional Proof of Delivery
 subquestion: |
-  This program makes the Proof of Delivery forms for the first 8 parties.
+  This program makes the Proof of Delivery forms for up to 8 other parties.
   
-  You will need to fill out *Additional Proof of Delivery* forms for the other parties in your case. 
+  You will need to fill out *Additional Proof of Delivery* forms for ${comma_and_list(delivery_parties[8:])}. 
   
   You can download blank *Additional Proof of Delivery* forms at the end of this program.
 ---
@@ -551,6 +552,8 @@ question: |
 subquestion: |
   ${ collapse_template(delivery_method_help) }  
 
+  For best results, complete the Proof of Delivery section and send the forms today.
+
   If you do not know this now, you can add it to the Proof of Delivery section of your forms later.
 field: x.knows_delivery_method
 choices:
@@ -568,7 +571,7 @@ content: |
   * US mail or a delivery company (like UPS or FedEx), or
   * Hand delivery.
 
-  You may use US mail, a delivery company, or hand delivery if you or the other party **does not** have an email address.
+  You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address.
 terms:
   - e-filing system: |
       The court's e-filing system could be an electronic filing manager (EFM) or an approved electronic filing service provider (EFSP).
@@ -583,11 +586,13 @@ question: |
   How will you send your ${ form_name } to ${ users[i].name.full(middle="full") }?
   % endif
 subquestion: |  
+  You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address.
+
+  For best results, complete the Proof of Delivery section and send the forms today.
+
   **Note:** If you do not know this now, be sure to add it to the Proof of Delivery section of your forms later.
-  
-  You may use US mail, a delivery company, or hand delivery if you or the other party **does not** have an email address.
-  
-  ${ collapse_template(efiling_help) }  
+
+  ${ collapse_template(efiling_help) }
 fields:
   - E-filing system: users[i].efm_delivery
     datatype: yesnowide
@@ -622,10 +627,12 @@ question: |
   How will you send your ${ form_name } to ${ other_parties[i].name.full(middle="full") }?
   % endif
 subquestion: |  
+  You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address.
+
+  For best results, complete the Proof of Delivery section and send the forms today.
+
   **Note:** If you do not know this now, be sure to add it to the Proof of Delivery section of your forms later.
-  
-  You may use US mail, a delivery company, or hand delivery if you or the other party **does not** have an email address.
-  
+
   ${ collapse_template(efiling_help) }  
 fields:
   - E-filing system: other_parties[i].efm_delivery
@@ -654,6 +661,8 @@ question: |
   When will you send your ${ form_name } to ${ x.name.full(middle="full") }?
   % endif
 subquestion: |
+  For best results, complete the Proof of Delivery section and send the forms today.
+
   **Note:** If you do not know this now, be sure to add it to the Proof of Delivery section of your forms later.
 fields:
   - Date: x.delivery_date
@@ -773,7 +782,7 @@ code: |
     illinois_appearance_additional_blank.enabled = True
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[illinois_appearance_instructions, illinois_appearance_single_pdf_bundle, illinois_appearance_additional_blank], filename="appearance.pdf", title="Download all forms")
+  - al_user_bundle: ALDocumentBundle.using(elements=[illinois_appearance_instructions, illinois_appearance_single_pdf_bundle, illinois_appearance_additional_blank], filename="appearance.pdf", title="All forms")
   - al_court_bundle: ALDocumentBundle.using(elements=[illinois_appearance_single_pdf_bundle], filename="appearance.pdf", title="Appearance")
 ---
 objects:
