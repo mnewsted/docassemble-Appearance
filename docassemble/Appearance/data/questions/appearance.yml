@@ -558,7 +558,7 @@ subquestion: |
 field: x.knows_delivery_method
 choices:
   - Yes: True
-  - No: False
+  - No. I do not know this now. I will add it to my forms later.: False
 ---
 template: delivery_method_help
 subject: |
