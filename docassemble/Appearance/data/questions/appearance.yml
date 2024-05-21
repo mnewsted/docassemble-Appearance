@@ -64,35 +64,39 @@ code: |
   if trial_with != "judge only":
     jury_demand_filing_info
 
-  set_progress(50)
+  set_progress(60)
   nav.set_section('section_delivery')
   delivery_intro
-  if delivery_parties.number() > 8:
-    extra_delivery_forms
+  #if delivery_parties.number() > 8:
+  #  extra_delivery_forms
   set_progress(75)
-  for person in delivery_parties[:8]:
+  #for person in delivery_parties[:8]:
+  for person in delivery_parties:
     if person.is_represented:
       person.lawyer.name.first
     person.address.address
     if person.knows_delivery_method:
       person.mail_delivery
       person.delivery_date
-  
-  for person in delivery_parties[:8]:
-    if person.knows_delivery_method == False or person.hand_delivery == True:
-      hand_delivery_info
-  e_signature
 
-  set_progress(75)
+  hand_delivery_info
+
+  #for person in delivery_parties[:8]:
+  #  if person.knows_delivery_method == False or person.hand_delivery == True:
+  #    hand_delivery_info
+      
+  set_progress(80)
   nav.set_section('section_about_you')
   users[0].address.address
   users[0].phone_number
   if users[0].email_notice == True:
     users[0].email
+  e_signature
 
   set_progress(100)
   nav.set_section('section_download')
   forms_assembling
+  refresh_delivery_bundle
   snapshot_forms
   get_docs_screen
 ---
@@ -428,28 +432,32 @@ fields:
 ---
 id: e-signature
 question: |
-  Do you want to add your e-signature to your ${ form_name }?
+  Do you want to add your e-signature to your forms?
 subquestion: |
-  If you do not add your **{e-signature}**, you must sign your paper form before you file and deliver it.
+  If you do not add your **{e-signature}**, you must sign your paper forms before you file and deliver them.
 
-  ${ collapse_template(signature_help) }  
+  <div class="alert alert-info ilao-info" role="alert">
+    <h6 class="alert-heading">What it means to sign your forms</h6>
+    <p>By signing your <i>Appearance</i> and <i>Jury Request</i>, you are certifying that:</p>
+    <p><ul>
+      <li>You read the document,</li>
+      <li>You believe it to be true and correct, and</li>
+      <li>You are not filing it for an improper purpose.</li>
+    </ul></p>
+    <p>See the <a href="https://ilcourtsaudio.blob.core.windows.net/antilles-resources/resources/9ce1fce9-895f-463e-b87d-f9b7631f8fde/Rule%20137.pdf"><b>Illinois Supreme Court Rule 137</b></a> for more information.</p>
+    <p>By signing the Proof of Delivery section of your forms, you are certifying that:</p>
+    <p><ul>
+      <li>Everything on the forms is true and correct, and</li>
+      <li>You understand that making a false statement on the form is perjury, which can result in criminal penalties.</li>
+    </ul></p>
+  <p>See the <a href="https://www.ilga.gov/legislation/ilcs/documents/073500050k1-109.htm"><b>Code of Civil Procedure, 735 ILCS 5/1-109</b></a> for more information.</p>
+  </div>
 fields:
   - "Add e-signature?": e_signature
     datatype: yesnoradio
 terms:
   - "e-signature": |
       An e-signature is an electronic signature. It is a digital version of a signature that has the same effect as a hand-written signature. 
----
-template: signature_help
-subject: |
-  **What does it mean to sign the *Appearance*?**
-content: |  
-  By signing your *Appearance*, you are certifying that:
-  
-  * Everything on the form is true and correct, and
-  * You understand that making a false statement on the form is perjury, which can result in criminal penalties.
-  
-  See the [**Code of Civil Procedure, 735 ILCS 5/1-109**](https://www.ilga.gov/legislation/ilcs/documents/073500050k1-109.htm), for more information.
 ---
 reconsider: True
 code: |
@@ -703,7 +711,7 @@ question: |
 subquestion: |
   **Don't forget!** Make sure you review and complete the Proof of Delivery section of your forms. 
   
-  [FILE proof_of_delivery_snip.png, 100%, Proof of Delivery section of forms]
+  [FILE proof_of_delivery_snip_2024.png, 100%, Proof of Delivery section of forms]
 
   **Instructions when delivering your forms by hand:**
 
@@ -768,6 +776,42 @@ objects:
   - appearance_additional_3: ALDocument.using(title="Additional Proof of Delivery 3", filename="appearance_additional_proof_delivery_3.pdf", has_addendum=False)
   - appearance_additional_blank: ALDocument.using(title="Additional Proof of Delivery (blank)", filename="appearance_additional_proof_delivery_blank.pdf", has_addendum=False)
 ---
+---
+#This needs to be a generic object because the delivery parties list entries point to entries in other lists.
+generic object: ALIndividual
+objects:
+  - x.additional_proof: ALDocument.using(title="Additional Proof of Delivery", filename="additional_proof_of_delivery.pdf", has_addendum=False)
+---
+objects:
+  - additional_delivery_bundle: ALDocumentBundle.using(elements=[], title= "Additional Proof of Delivery", filename="additional_proof_of_delivery.pdf", has_addendum=False, enabled=True)
+---
+reconsider: True
+code: |
+  #deliveries_to_bundle will be used as the elements for the additional_delivery_bundle object created in the above block. This is its initial definition for the Appearance.
+  deliveries_to_bundle = []
+
+  #enumerate allows us to reference the index in a for loop. This for loop appends each additional proof template to the deliveries_to_bundle object and sets the enabled trait for those templates.
+  for index, party in enumerate(delivery_parties):
+    #If the index is 0 or 1, the party is included on the motion and notice forms, and thus does not need to be added to additional proof of delivery
+    if index == 0 or index == 1:
+      party.additional_proof.enabled = False
+    #Because the additional delivery form can list two parties, we don't need a form for each delivery party beyond the first two. Instead, we only append party.additional_proof if party's index is an even number, as a party with an odd number will be included on the previous party.additional_proof
+    elif (index % 2) == 0:
+      party.additional_proof.enabled = True
+      #We only need to append the party.additional proof objects that we include.
+      deliveries_to_bundle.append(party.additional_proof)
+      #This if statement prevents an out of index range error. If we created the party.second_person without it, an out of index range would occur if party is the last entry in the delivery_parties list.
+      if (index + 1) < delivery_parties.number_gathered():
+        #This line creates an object associated with party that points to the item immediately after party in delivery_parties. Why? So we can refer to it in the party.additional_delivery attachment block even though there we can't refer to the index as we do in this for loop.
+        party.second_person = delivery_parties[index + 1]
+    #This else statement should catch all parties with an index divisible by 2, excluding index 0.
+    else:
+      party.additional_proof.enabled = False
+ 
+  additional_delivery_bundle.elements = deliveries_to_bundle
+  refresh_delivery_bundle = True
+
+---
 code: |
   appearance_attachment.enabled = False
   appearance_instructions.enabled = False
@@ -825,7 +869,7 @@ attachment:
   filename: appearance
   skip undefined: True
   editable: False
-  pdf template file: appearance_edited.pdf
+  pdf template file: appearance.pdf
   fields:
       - "trial_court_county": ${ trial_court.address.county.upper() }
       - "plaintiffs": ${ users.full_names() if user_ask_role == 'plaintiff' else other_parties.full_names() }
@@ -833,10 +877,8 @@ attachment:
       - "user__1": ${ users[0].name.full(middle="full") }
       - "user__2": ${ users[0].name.full(middle="full") }
       - "user__3": ${ users[0].name.full(middle="full") }
-      - "user_mail_address_line_one__1": ${ users[0].address.line_one(bare=True) }
-      - "user_mail_address_line_one__2": ${ users[0].address.line_one(bare=True) }
-      - "user_mail_address_city_state_zip__1": ${ users[0].address.line_two() }
-      - "user_mail_address_city_state_zip__2": ${ users[0].address.line_two() }
+      - "user_mail_address_one_line__1": ${ users[0].address.on_one_line(bare=True) }
+      - "user_mail_address_one_line__2": ${ users[0].address.on_one_line(bare=True) }
       - "user_phone_number__1": ${ phone_number_formatted(users[0].phone_number) }
       - "user_phone_number__2": ${ phone_number_formatted(users[0].phone_number) }
       - "user_email": ${ users[0].email if users[0].email_notice else '' }
@@ -844,15 +886,26 @@ attachment:
       - "case_number__1": ${ case_number }
       - "case_number__2": ${ case_number }
       - "case_number__3": ${ case_number }
+      - "case_number__4": ${ case_number }
+      
       - "judge_trial": ${ trial_with == "judge only" }
       - "six_person_jury_trial": ${ trial_with == "judge and six-person jury" }
       - "twelve_person_jury_trial": ${ trial_with == "judge and twelve-person jury" }
-      #changed for september 2022 form update
-      #- "is_trial_by_jury_yes": ${ is_trial_by_jury }
-      #- "is_trial_by_jury_no": ${ not is_trial_by_jury }
+      
       - "e_sign_name__1": ${ users[0].name.full(middle="full") if e_signature else '' }
       - "e_sign_name__2": ${ users[0].name.full(middle="full") if e_signature else '' }
-      - "is_email_notice_yes": ${ users[0].email_notice }
+      
+      - "he_him": ${  }
+      - "she_her": ${  }
+      - "they_them": ${  }
+      - "other_pronouns_cb": ${  }
+      - "other_pronouns": ${  }
+      - "mr": ${  }
+      - "ms": ${  }
+      - "mrs": ${  }
+      - "mx": ${  }
+      - "other_prefix_cb": ${  }
+      - "other_prefix": ${  }
 
       - "delivery_party1_name_full": | 
           % if delivery_parties[0].is_represented:
@@ -867,9 +920,15 @@ attachment:
       - "is_delivery_party1_efm_yes": ${ delivery_parties[0].efm_delivery if delivery_parties[0].knows_delivery_method else '' }
       - "is_delivery_party1_email_yes": ${ delivery_parties[0].email_delivery if delivery_parties[0].knows_delivery_method else '' }
       - "delivery_party1_date": ${ delivery_parties[0].delivery_date if delivery_parties[0].knows_delivery_method and delivery_parties[0].knows_delivery_date else '' }
-      - "delivery_party1_time": ${ format_time(delivery_parties[0].delivery_time, format='h:mm') if delivery_parties[0].knows_delivery_method and delivery_parties[0].knows_delivery_time else '' }
-      - "is_delivery_party1_am_yes": ${ True if delivery_parties[0].knows_delivery_method and format_time(delivery_parties[0].delivery_time, format='a')=='AM' else '' }
-      - "is_delivery_party1_am_no": ${ True if delivery_parties[0].knows_delivery_method and format_time(delivery_parties[0].delivery_time, format='a')=='PM' else '' }
+      - "delivery_party1_time": ${ format_time(delivery_parties[0].delivery_time, format='h:mm a') if delivery_parties[0].knows_delivery_method and delivery_parties[0].knows_delivery_time else '' }
+      - "is_delivery_party1_electronic": ${  }
+      - "is_delivery_party1_not_electronic": ${  }
+      - "delivery_party1_mail_city": ${  }
+      - "delivery_party1_mail_state": ${  }
+      - "delivery_party1_hand_address": ${  }
+      - "delivery_party1_jail_name": ${  }
+      - "is_delivery_party1_end": ${  }
+      - "is_delivery_party2": ${  }
 
       - "delivery_party2_name_full": | 
           % if delivery_parties[1].is_represented:
@@ -884,9 +943,14 @@ attachment:
       - "is_delivery_party2_efm_yes": ${ delivery_parties[1].efm_delivery if delivery_parties[1].knows_delivery_method else '' }
       - "is_delivery_party2_email_yes": ${ delivery_parties[1].email_delivery if delivery_parties[1].knows_delivery_method else '' }
       - "delivery_party2_date": ${ delivery_parties[1].delivery_date if delivery_parties[1].knows_delivery_method and delivery_parties[1].knows_delivery_date else '' }
-      - "delivery_party2_time": ${ format_time(delivery_parties[1].delivery_time, format='h:mm') if delivery_parties[1].knows_delivery_method and delivery_parties[1].knows_delivery_time else '' }
-      - "is_delivery_party2_am_yes": ${ True if delivery_parties[1].knows_delivery_method and format_time(delivery_parties[1].delivery_time, format='a')=='AM' else '' }
-      - "is_delivery_party2_am_no": ${ True if delivery_parties[1].knows_delivery_method and format_time(delivery_parties[1].delivery_time, format='a')=='PM' else '' }
+      - "delivery_party2_time": ${ format_time(delivery_parties[1].delivery_time, format='h:mm a') if delivery_parties[1].knows_delivery_method and delivery_parties[1].knows_delivery_time else '' }
+      
+      - "is_delivery_party2_electronic": ${  }
+      - "is_delivery_party2_not_electronic": ${  }
+      - "delivery_party2_mail_city": ${  }
+      - "delivery_party2_mail_state": ${  }
+      - "delivery_party2_hand_address": ${  }
+      - "delivery_party2_jail_name": ${  }
 
       - "is_additional_proof_delivery_yes": ${ delivery_parties.number() > 2 }
 ---
@@ -1111,10 +1175,6 @@ review:
     button: |
       **Trial type:**
       ${ trial_with }
-  - Edit: e_signature
-    button: |
-      **Do you want to add your e-signature to your forms?**
-      ${ word(yesno(e_signature)) }
   - Edit: users[0].address.address
     button: |
       **Your address:**
@@ -1132,6 +1192,10 @@ review:
       **Your email:**
       ${ users[0].email }
     show if: users[0].email_notice
+  - Edit: e_signature
+    button: |
+      **Do you want to add your e-signature to your forms?**
+      ${ word(yesno(e_signature)) }
 ---
 #needs: yes_no_unknown
 id: delivery party review
@@ -1305,10 +1369,6 @@ review:
       % for my_var in other_parties:
         * ${ my_var.name.full(middle="full") }
       % endfor
-  - Edit: e_signature
-    button: |
-      **Do you want to add your e-signature to your forms?**
-      ${ word(yesno(e_signature)) }
 
 ---
 id: about you review screen
@@ -1339,3 +1399,7 @@ review:
       **Your email:**
       ${ users[0].email }
     show if: users[0].email_notice
+  - Edit: e_signature
+    button: |
+      **Do you want to add your e-signature to your forms?**
+      ${ word(yesno(e_signature)) }
