@@ -1,13 +1,12 @@
 metadata:
   title: Appearance
   short title: Appearance
-  comment: This program helps you tell the court and the other parties that you are participating in a court case.
+  comment: This program helps you tell the court and the other parties that you are participating in a court case. It also makes a form to request a jury trial.
   authors:
     - Matt Newsted
 ---
 include:
   - docassemble.AssemblyLine:assembly_line.yml
-  - docassemble.ALToolbox:phone-number-validation.yml  
   - docassemble.ILAO:ilao-interview-framework.yml
   - docassemble.ILAO:shared-basic-questions.yml
 ---
@@ -43,6 +42,7 @@ mandatory: True
 code: |
   nav.set_section('section_intro')
   sees_nav_bar
+  snapshot_start
   efiling_pilot
   how_to_use
   set_progress(5)
@@ -56,6 +56,8 @@ code: |
   users.gather()
   set_progress(30)
   other_parties.gather()
+  if in_re_check == True:
+    in_re_label
   set_progress(40)
   trial_court
   case_number
@@ -90,8 +92,32 @@ code: |
 
   set_progress(100)
   nav.set_section('section_download')
+  forms_assembling
+  snapshot_forms
   get_docs_screen
+---
+code: |
+  stuff_to_snapshot = {
+  	'start_time': str(current_datetime().format_datetime()),
+  	'started_interview': True, 
+  	}
+    
+  stuff_to_snapshot['zip'] = showifdef('users[0].address.zip')
 
+  stuff_to_snapshot['downloaded_forms'] = showifdef('forms_assembling')
+  
+  store_variables_snapshot(
+  	data=stuff_to_snapshot, persistent=True
+  	)
+  snapshot_interview_state = True
+---
+code: |
+  snapshot_interview_state
+  snapshot_start = True  
+---
+code: |
+  reconsider('snapshot_interview_state')
+  snapshot_forms = True
 ---
 id: welcome
 question: |
@@ -99,7 +125,7 @@ question: |
 subquestion: |
   Welcome to Illinois Legal Aid Online's **Appearance** Easy Form.
 
-  This program creates an Appearance form that tells the court and the other parties that you are participating in a court case.
+  This program creates an *Appearance* form that tells the court and the other parties that you are participating in a court case. It also makes a *Jury Request* if you want a jury and a judge to decide your case.
   
   To learn more, read ILAO's article about [**responding to a lawsuit**](https://www.illinoislegalaid.org/node/32236).
 field: sees_nav_bar
@@ -131,11 +157,11 @@ subquestion: |
  
   ${ collapse_template(help_example) }  
 
-  Click on **{green words}** to learn what they mean. Some questions have a question mark in a circle ${ fa_icon("question-circle", color_css="#0dcaf0" ) } that also gives help.
+  Click on **{green words}** to learn what they mean. Some pages have a question mark in a circle ${ fa_icon("question-circle", color_css="#0dcaf0" ) } that helps explain things.
 ---
 template: help_example
 subject: |
-  **You can expand sections like this to show more information.**
+  **You can click sections like this to show more information.**
 content: |  
   This is an example of help. Click again to hide.
 ---
@@ -144,32 +170,13 @@ continue button field: whats_next
 question: |
   After you finish this program
 subquestion: |
-  After you download your **{Appearance}**, you must file it with the court. This program does not file your ${ form_name } for you.
+  After you download your **{Appearance}** and **{Jury Request}**, you must file them with the court. This program does not file your forms for you.
   
-  Read the "How to File an Appearance" instructions you can download at the end of this program. 
+  Read the "How to File an Appearance or Request a Jury" instructions you can download at the end of this program. 
 ---
-# question replaced with ILAO framework version
-#id: accept terms
-#question: |
-#  Terms of use
-#subquestion: |
-#  This program does not provide legal advice. It does not take the place of advice from a lawyer.
-#
-#  Using this program does not create an attorney-client relationship between you and Illinois Legal Aid Online or its employees.
-#
-#  ${ collapse_template(get_legal_help) }  
-#
-#fields:
-#  - To continue, you must accept the [**terms of use**](https://www.illinoislegalaid.org/about/terms-of-use).: accept
-#    datatype: checkboxes
-#    none of the above: False
-#    minlength: 1
-#    choices:
-#      - I accept the terms of use.
-#    validation messages:
-#      minlength: |
-#        You cannot continue unless you agree to the terms of use. 
-#continue button field: accept_terms
+terms:
+  - "Jury Request": |
+      A Jury Request tells the court you want a trial with a judge and a jury. It is also called a Jury demand.
 ---
 template: get_legal_help
 subject: |
@@ -178,21 +185,6 @@ content: |
   If you have questions or concerns about your legal problem and want legal advice you should talk to a lawyer.
   
   Use [**Get Legal Help**](https://www.illinoislegalaid.org/get-legal-help) to find free or low-cost legal services in your area.
----
-id: not legal advice
-event: not_legal_advice
-question: |
-  Sorry
-subquestion: |
-  You cannot continue unless you understand this program does not give legal advice and accept the [**terms of use**](https://www.illinoislegalaid.org/about/terms-of-use).
-
-  This program will only help you complete the legal documents you want. By providing this program we are not giving you legal advice. Your use of this program does not mean that Illinois Legal Aid Online will provide you with a lawyer or with any individual legal help.
-
-  If you have questions or concerns about your legal problem and want legal advice you should talk to a lawyer. If you would like help finding free or low-cost legal services in your area, use [**Get Legal Help**](https://www.illinoislegalaid.org/get-legal-help).
-
-buttons:
-  - Exit: exit
-  - Restart: restart
 ---
 id: lawsuit information
 continue button field: lawsuit_information
@@ -214,6 +206,26 @@ subject: |
   **What if I started the lawsuit?**
 content: |  
   You can also file an Appearance if you started the lawsuit. Usually, you only need to file an Appearance if you had a lawyer in the case before, but now you want to represent yourself.
+---
+id: in re check
+question: |
+ Does the court case have the words "**In re:**" in the name?
+subquestion: |
+  Look at the name of the case at the top of the court papers. "In re" is often used in probate, bankruptcy, and some family law cases. For example, a probate case regarding Jane Doe’s estate might be called "In re: Estate of Jane Doe."
+  
+  **Note:** If the court papers list the names of people in the case, you can select **No**. For example, if the case title is "In re: Marriage of Julia Smith and Tony Smith," the names you already entered will be put on your forms. 
+fields:
+  - no label: in_re_check
+    datatype: yesnoradio
+---
+id: in re label
+question: |
+  What does it say after "**In re:**" on the court papers?
+subquestion: |
+  For example, the case could be called "In re: The Will of Elena Black."
+fields:
+  - In re:: in_re_label
+    maxlength: 50
 ---
 id: any other users
 question: |
@@ -697,27 +709,36 @@ subquestion: |
 
   * If a party in your case does not have a lawyer, you can hand-deliver the forms to them or to a family member who is 13 or older at their home.
   * If they do have a lawyer, you can hand-deliver the forms to the lawyer or to the lawyer's office.
-
+---
+id: forms assembling
+continue button field: forms_assembling
+question: |
+  Almost done
+subquestion: |
+  After you click **Next**, it may take a few moments to finish making your forms.
+  
+  ###### You do not need to refresh your screen. Hang in there!
+  
+  [NEWLINE]
 ---
 id: get docs screen
 event: get_docs_screen
 question: |
   Download
 subquestion: |
-  
   Your forms are ready. View and download your forms below. Click **Make changes** to fix any mistakes.
 
-  This program does not file your Appearance with the court or deliver it to other parties in your case. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/efileil/).
+  This program does not file your forms with the court or deliver them to other parties in your case. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
 
   ${ action_button_html(url_action('review_answers'), label=':edit: Make changes', color='success', size="md") }
   
   ${ al_user_bundle.download_list_html() }
 
-  &nbsp;
+  [NEWLINE]
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
 
-  **Note:** This program does not file your Appearance with the court or deliver it to other parties in your case. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/efileil/).
+  **Note:** This program does not file your forms with the court or deliver them to other parties in your case. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
   
   Thank you for using ILAO Easy Forms!
 under: |
@@ -731,7 +752,7 @@ under: |
 generic object: ALDocumentBundle
 template: x.send_email_template
 subject: |
-  Appearance forms
+  Appearance and Jury Request forms
 content: |
   Your forms are attached.
   
@@ -740,67 +761,67 @@ content: |
   [Illinois Legal Aid Online](https://www.illinoislegalaid.org)
 ---
 objects:
-  - illinois_appearance_attachment: ALDocument.using(title="Appearance", filename="appearance.pdf", has_addendum=False)
-  - illinois_appearance_instructions: ALDocument.using(title="Instructions", filename="instructions.pdf", has_addendum=False)
-  - illinois_appearance_additional: ALDocument.using(title="Additional Proof of Delivery", filename="appearance_additional_proof_delivery.pdf", has_addendum=False)
-  - illinois_appearance_additional_2: ALDocument.using(title="Additional Proof of Delivery 2", filename="appearance_additional_proof_delivery_2.pdf", has_addendum=False)
-  - illinois_appearance_additional_3: ALDocument.using(title="Additional Proof of Delivery 3", filename="appearance_additional_proof_delivery_3.pdf", has_addendum=False)
-  - illinois_appearance_additional_blank: ALDocument.using(title="Additional Proof of Delivery (blank)", filename="appearance_additional_proof_delivery_blank.pdf", has_addendum=False)
+  - appearance_attachment: ALDocument.using(title="Appearance", filename="appearance.pdf", has_addendum=False)
+  - appearance_instructions: ALDocument.using(title="Instructions", filename="instructions.pdf", has_addendum=False)
+  - appearance_additional: ALDocument.using(title="Additional Proof of Delivery", filename="appearance_additional_proof_delivery.pdf", has_addendum=False)
+  - appearance_additional_2: ALDocument.using(title="Additional Proof of Delivery 2", filename="appearance_additional_proof_delivery_2.pdf", has_addendum=False)
+  - appearance_additional_3: ALDocument.using(title="Additional Proof of Delivery 3", filename="appearance_additional_proof_delivery_3.pdf", has_addendum=False)
+  - appearance_additional_blank: ALDocument.using(title="Additional Proof of Delivery (blank)", filename="appearance_additional_proof_delivery_blank.pdf", has_addendum=False)
 ---
 code: |
-  illinois_appearance_attachment.enabled = False
-  illinois_appearance_instructions.enabled = False
-  illinois_appearance_additional.enabled = False
-  illinois_appearance_additional_2.enabled = False
-  illinois_appearance_additional_3.enabled = False
-  illinois_appearance_additional_blank.enabled = False
+  appearance_attachment.enabled = False
+  appearance_instructions.enabled = False
+  appearance_additional.enabled = False
+  appearance_additional_2.enabled = False
+  appearance_additional_3.enabled = False
+  appearance_additional_blank.enabled = False
 
   if delivery_parties.number() < 3:
-    illinois_appearance_attachment.enabled = True
-    illinois_appearance_instructions.enabled = True
+    appearance_attachment.enabled = True
+    appearance_instructions.enabled = True
   elif delivery_parties.number() < 5:
-    illinois_appearance_attachment.enabled = True
-    illinois_appearance_instructions.enabled = True
-    illinois_appearance_additional.enabled = True
+    appearance_attachment.enabled = True
+    appearance_instructions.enabled = True
+    appearance_additional.enabled = True
   elif delivery_parties.number() < 7:
-    illinois_appearance_attachment.enabled = True
-    illinois_appearance_instructions.enabled = True
-    illinois_appearance_additional.enabled = True
-    illinois_appearance_additional_2.enabled = True
+    appearance_attachment.enabled = True
+    appearance_instructions.enabled = True
+    appearance_additional.enabled = True
+    appearance_additional_2.enabled = True
   elif delivery_parties.number() < 9:
-    illinois_appearance_attachment.enabled = True
-    illinois_appearance_instructions.enabled = True
-    illinois_appearance_additional.enabled = True
-    illinois_appearance_additional_2.enabled = True
-    illinois_appearance_additional_3.enabled = True
+    appearance_attachment.enabled = True
+    appearance_instructions.enabled = True
+    appearance_additional.enabled = True
+    appearance_additional_2.enabled = True
+    appearance_additional_3.enabled = True
   else:
-    illinois_appearance_attachment.enabled = True
-    illinois_appearance_instructions.enabled = True
-    illinois_appearance_additional.enabled = True
-    illinois_appearance_additional_2.enabled = True
-    illinois_appearance_additional_3.enabled = True
-    illinois_appearance_additional_blank.enabled = True
+    appearance_attachment.enabled = True
+    appearance_instructions.enabled = True
+    appearance_additional.enabled = True
+    appearance_additional_2.enabled = True
+    appearance_additional_3.enabled = True
+    appearance_additional_blank.enabled = True
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[illinois_appearance_instructions, illinois_appearance_single_pdf_bundle, illinois_appearance_additional_blank], filename="appearance.pdf", title="All forms")
-  - al_court_bundle: ALDocumentBundle.using(elements=[illinois_appearance_single_pdf_bundle], filename="appearance.pdf", title="Appearance")
+  - al_user_bundle: ALDocumentBundle.using(elements=[appearance_instructions, appearance_single_pdf_bundle, appearance_additional_blank], filename="appearance.pdf", title="All forms")
+  - al_court_bundle: ALDocumentBundle.using(elements=[appearance_single_pdf_bundle], filename="appearance.pdf", title="Appearance")
 ---
 objects:
-  - illinois_appearance_single_pdf_bundle: ALDocumentBundle.using(elements=[illinois_appearance_attachment, illinois_appearance_additional, illinois_appearance_additional_2, illinois_appearance_additional_3], filename="appearance.pdf", title="Appearance", enabled=True)
+  - appearance_single_pdf_bundle: ALDocumentBundle.using(elements=[appearance_attachment, appearance_additional, appearance_additional_2, appearance_additional_3], filename="appearance.pdf", title="Appearance", enabled=True)
 ---
 attachment:
-  variable name: illinois_appearance_instructions[i]
-  name: illinois_appearance_instructions
+  variable name: appearance_instructions[i]
+  name: appearance_instructions
   filename: appearance-instructions
   skip undefined: True
   editable: False
-  pdf template file: appearance_instructions_with_fake_field.pdf
+  pdf template file: appearance_instructions.pdf
   fields:
       - "fake": ${ "" }
 ---
 attachment:
-  variable name: illinois_appearance_attachment[i]
-  name: illinois_appearance_attachment
+  variable name: appearance_attachment[i]
+  name: appearance_attachment
   filename: appearance
   skip undefined: True
   editable: False
@@ -870,8 +891,8 @@ attachment:
       - "is_additional_proof_delivery_yes": ${ delivery_parties.number() > 2 }
 ---
 attachment:
-  variable name: illinois_appearance_additional[i]
-  name: illinois_appearance_additional
+  variable name: appearance_additional[i]
+  name: appearance_additional
   filename: appearance-additional-delivery
   skip undefined: True
   editable: False
@@ -925,8 +946,8 @@ attachment:
       - "e_sign_name": ${ users[0].name.full(middle="full") if e_signature else '' }
 ---
 attachment:
-  variable name: illinois_appearance_additional_2[i]
-  name: illinois_appearance_additional_2
+  variable name: appearance_additional_2[i]
+  name: appearance_additional_2
   filename: appearance-additional-delivery-2
   skip undefined: True
   editable: False
@@ -981,8 +1002,8 @@ attachment:
       - "e_sign_name": ${ users[0].name.full(middle="full") if e_signature else '' }
 ---
 attachment:
-  variable name: illinois_appearance_additional_3[i]
-  name: illinois_appearance_additional_3
+  variable name: appearance_additional_3[i]
+  name: appearance_additional_3
   filename: appearance-additional-delivery-3
   skip undefined: True
   editable: False
@@ -1037,8 +1058,8 @@ attachment:
       - "e_sign_name": ${ users[0].name.full(middle="full") if e_signature else '' }
 ---
 attachment:
-  variable name: illinois_appearance_additional_blank[i]
-  name: illinois_appearance_additional_blank
+  variable name: appearance_additional_blank[i]
+  name: appearance_additional_blank
   filename: appearance-additional-delivery-blank
   skip undefined: True
   editable: True
@@ -1318,4 +1339,3 @@ review:
       **Your email:**
       ${ users[0].email }
     show if: users[0].email_notice
-
