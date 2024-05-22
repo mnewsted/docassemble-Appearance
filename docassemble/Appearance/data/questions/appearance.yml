@@ -89,8 +89,13 @@ code: |
   nav.set_section('section_about_you')
   users[0].address.address
   users[0].phone_number
-  if users[0].email_notice == True:
-    users[0].email
+
+  # removed separate email question now that we are using combined contact info page
+  #if users[0].email_notice == True:
+  #  users[0].email
+  pronouns_none
+  prefix_none
+  
   e_signature
 
   set_progress(100)
@@ -276,7 +281,7 @@ fields:
 ---
 template: long_name_help
 subject: |
-  **What if the person's name doesn't fit into 4 fields?**
+  **What if I need more space?**
 content: |
   If the party has a long name like "Jane Smith, Director of Housing," select **Business or organization**. You can then enter the full name and title.
 ---
@@ -323,10 +328,6 @@ fields:
     datatype: integer
     code: |
       court_county_lookup()
-#fields:
-#  - no label: trial_court_index
-#    code: |
-#      court_list._load_courts()['address_county'].items()
 ---
 code: |
   def court_county_lookup(lowercase=False):
@@ -337,15 +338,6 @@ code: |
         court_name = court[1].lower() if lowercase else court[1]
         filtered_courts.append((court[0],court_name))
     return sorted( filtered_courts, key=lambda y: y[1])
-
-# old code
-#  def court_county_lookup():
-#    all_court_counties = court_list._load_courts()['address_county'].items()
-#    filtered_courts = [(-1, "Cook")]
-#    for court in all_court_counties:
-#      if court[1] != "Cook":
-#        filtered_courts.append(court)
-#    return sorted( filtered_courts, key=lambda y: y[1])
 ---
 depends on:
   - trial_court_index
@@ -399,36 +391,133 @@ subquestion: |
   Check with [**Illinois Court Help**](https://ilcourthelp.gov) or call (833) 411-1121. You can also ask your local circuit clerk.
  
 ---
-id: phone number
+#id: phone number
+#question: |
+#  What is your phone number?
+#subquestion: |
+#  If you do not want to list your phone number on your form, leave this blank.
+#fields:
+#  - Phone: users[0].phone_number
+#    datatype: al_international_phone
+#    required: False
+#---
+#id: notice by email
+#question: |
+#  Do you have an email address?
+#subquestion: |
+#  If you have an email address, you must list it so the court and other parties can contact you about this case.
+#fields:
+#  - "Email?": users[0].email_notice
+#    datatype: yesnoradio
+#---
+#id: email address
+#question: |
+#  What email address do you want to list on your court forms?
+#subquestion: |
+#  If you do not want to enter your personal email address, you can create a new email account to get email about your case.
+#  
+#  Be sure to check this email daily, otherwise you may miss important information about your case.
+#fields:
+#  - Email address: users[0].email    
+#    datatype: email
+#    #required: False
+---
+id: your contact information
 question: |
-  What is your phone number?
+  What is your contact information?
 subquestion: |
-  If you do not want to list your phone number on your form, leave this blank.
-fields:
-  - Phone: users[0].phone_number
+  The court or other parties might need to contact you about this case.
+
+  **This information will appear on your court forms.**
+  
+  If you do not want to list a phone number on your forms, leave it blank.
+
+  If you have an email address, you must list it. Be sure to check your email daily, otherwise you may miss important information about your case.
+
+  ${ collapse_template(contact_info_help) }  
+fields:  
+  - Phone number: users[0].phone_number
     datatype: al_international_phone
     required: False
----
-id: notice by email
-question: |
-  Do you have an email address?
-subquestion: |
-  If you have an email address, you must list it so the court and other parties can contact you about this case.
-fields:
-  - "Email?": users[0].email_notice
+  - label: |
+      Do you have an email address?
+    field: users[0].has_email_address      
     datatype: yesnoradio
----
-id: email address
-question: |
-  What email address do you want to list on your court forms?
-subquestion: |
-  If you do not want to enter your personal email address, you can create a new email account to get email about your case.
-  
-  Be sure to check this email daily, otherwise you may miss important information about your case.
-fields:
+  - note: |
+      This email address will appear on your court forms. Be sure to check 
+      this email daily, otherwise you may miss important information about 
+      your case.
+    show if: users[0].has_email_address      
   - Email address: users[0].email    
     datatype: email
-    #required: False
+    show if: 
+      variable: users[0].has_email_address
+      is: True
+---
+template: contact_info_help
+subject: |
+  **What if I don't want to list my email address?**
+content: |  
+  If you do not want to enter your personal email address, you can create a new email account to get email about your case.
+  
+  To make a new email account try one of these email services:
+  
+  * [**Gmail**](https://accounts.google.com/SignUp)
+  * [**Outlook**](https://outlook.live.com/owa/?nlp=1&signup=1)
+  * [**Yahoo**](https://login.yahoo.com/account/create?.lang=en-US&.intl=us)
+---
+id: pronouns
+question: |
+  What pronouns do you want the court to use?
+subquestion: |
+  On the *Appearance*, you can tell the court which pronouns you use.
+fields:
+  - I prefer not to answer.: pronouns_none
+    datatype: yesno
+    disable others: True
+  - Pronouns (optional): pronouns
+    input type: radio
+    required: False
+    choices:
+      - She/her: She/her
+      - He/him: He/him
+      - They/them: They/them
+      - Other: other
+  - Other pronouns: other_pronouns
+    maxlength: 40
+    show if:
+      variable: pronouns
+      is: 'other'
+validation code: |
+  if not (pronouns_none or pronouns == "She/her" or pronouns == "He/him" or pronouns == "They/them" or pronouns == "other"):
+    validation_error("Please select one.", field="pronouns")
+---
+id: prefix
+question: |
+  What prefix do you want the court to use?
+subquestion: |
+  On the *Appearance*, you can tell the court what prefix you use.
+fields:
+  - I prefer not to answer.: prefix_none
+    datatype: yesno
+    disable others: True
+  - Prefix (optional): prefix
+    input type: radio
+    required: False
+    choices:
+      - Ms.: Ms.
+      - Mrs.: Mrs.
+      - Mr.: Mr.
+      - Mx.: Mx.
+      - Other: other
+  - Other prefix: other_prefix
+    maxlength: 10
+    show if:
+      variable: prefix
+      is: 'other'
+validation code: |
+  if not (prefix_none or prefix == "Ms." or prefix == "Mrs." or prefix == "Mr." or prefix == "Mx." or prefix == "other" ):
+    validation_error("Please select one.", field="prefix")
 ---
 id: e-signature
 question: |
