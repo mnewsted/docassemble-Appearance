@@ -63,8 +63,9 @@ code: |
   set_progress(40)
   trial_court
   case_number
-  if trial_with != "judge only":
-    jury_demand_filing_info
+  # removed e-filing instructions since there is now a separate jury demand
+  #if trial_with != "judge only":
+  #  jury_demand_filing_info
 
   set_progress(60)
   nav.set_section('section_delivery')
@@ -285,7 +286,7 @@ template: long_name_help
 subject: |
   **What if I need more space?**
 content: |
-  If the party has a long name like "Jane Smith, Director of Housing," select **Business or organization**. You can then enter the full name and title.
+  If the person has a long name like "Jane Smith, Director of Housing," select **Business or organization**. You can then enter the full name and title.
 ---
 # modified other opposing parties question
 # add to basic questions
@@ -575,7 +576,7 @@ subquestion: |
 
   You must send a copy of your ${ form_name } to each of them.
 
-  If someone in the case has a lawyer, you must send it to the lawyer.
+  If someone in the case has a lawyer, you only need to send it to their lawyer.
 ---
 id: has lawyer
 generic object: ALIndividual
@@ -680,9 +681,9 @@ content: |
   * The court's **{e-filing system}**,
   * Email,
   * US mail or a delivery company (like UPS or FedEx), or
-  * Hand delivery to the party, the party's family member over 13 at their residence, their lawyer, or their lawyer's office.
+  * Hand delivery to the person, the person's family member over 13 at their residence, the person's lawyer, or their lawyer's office.
 
-  You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address.
+  You may use US mail or a delivery company, or hand delivery if you or the other person **does not** have an email address.
   
   If you are in a prison or jail, you can deliver by mail.
 terms:
@@ -699,7 +700,7 @@ question: |
   How will you send your ${ form_name } to ${ users[i].name.full(middle="full") }?
   % endif
 subquestion: |  
-  You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address. If you are in a prison or jail, you can deliver by mail.
+  You may use US mail or a delivery company, or hand delivery if you or the other person **does not** have an email address. If you are in a prison or jail, you can deliver by mail.
 
   For best results, complete the Proof of Delivery section and send the forms today.
 
@@ -737,8 +738,8 @@ fields:
     required: False
   - Hand delivery: users[i].hand_delivery
     datatype: yesnowide
-    note: |
-      You can only deliver to the party, the party's family member over 13 at their residence, their lawyer, or their lawyer's office.
+    help: |
+      You can only deliver to to the person, the person's family member over 13 at their residence, the person's lawyer, or their lawyer's office.
   - Street address: users[i].hand_delivery_address.address
     address autocomplete: True
     show if: 
@@ -794,7 +795,7 @@ question: |
   How will you send your ${ form_name } to ${ other_parties[i].name.full(middle="full") }?
   % endif
 subquestion: |  
-  You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address.
+  You may use US mail or a delivery company, or hand delivery if you or the other person **does not** have an email address. If you are in a prison or jail, you can deliver by mail.
 
   For best results, complete the Proof of Delivery section and send the forms today.
 
@@ -805,7 +806,7 @@ fields:
   - E-filing system: other_parties[i].efm_delivery
     datatype: yesnowide
     help: |
-      The court's e-filing system could be an electronic filing manager (EFM) or an approved electronic filing service provider (EFSP).
+      The court's e-filing system could be any approved electronic filing service provider (EFSP).
   - Email: other_parties[i].email_delivery
     datatype: yesnowide
   - Email address: other_parties[i].delivery_email
@@ -816,8 +817,61 @@ fields:
     required: False
   - US mail or delivery company (like UPS or FedEx): other_parties[i].mail_delivery
     datatype: yesnowide
+  - City of mailbox or delivery company: other_parties[i].delivery_mail_city
+    maxlength: 30
+    show if: 
+      variable: other_parties[i].mail_delivery
+      is: True
+    required: False
+  - State of mailbox or delivery company: other_parties[i].delivery_mail_state
+    code: |
+      states_list()
+    default: IL
+    show if: 
+      variable: other_parties[i].mail_delivery
+      is: True
+    required: False
   - Hand delivery: other_parties[i].hand_delivery
     datatype: yesnowide
+    help: |
+      You can only deliver to the person, the person's family member over 13 at their residence, the person's lawyer, or their lawyer's office.
+  - Street address: other_parties[i].hand_delivery_address.address
+    address autocomplete: True
+    show if: 
+      variable: other_parties[i].hand_delivery
+      is: True
+    required: False
+  - Address line 2: other_parties[i].hand_delivery_address.unit
+    show if: 
+      variable: other_parties[i].hand_delivery
+      is: True
+    required: False
+  - City: other_parties[i].hand_delivery_address.city
+    show if: 
+      variable: users[i].hand_delivery
+      is: True
+    required: False
+  - State: users[i].hand_delivery_address.state
+    code: |
+      states_list()
+    default: IL      
+    show if: 
+      variable: other_parties[i].hand_delivery
+      is: True
+    required: False
+  - ZIP code: other_parties[i].hand_delivery_address.zip
+    show if: 
+      variable: other_parties[i].hand_delivery
+      is: True
+    required: False
+  - By mail from a prison or jail: other_parties[i].jail_delivery
+    datatype: yesnowide
+  - Name of prison or jail: other_parties[i].delivery_jail_name
+    maxlength: 40
+    show if: 
+      variable: other_parties[i].jail_delivery
+      is: True
+    required: False
 ---
 id: delivery time
 generic object: ALIndividual
@@ -862,7 +916,7 @@ subquestion: |
 
   **Instructions when delivering your forms by hand:**
 
-  * If a party in your case does not have a lawyer, you can hand-deliver the forms to them or to a family member who is 13 or older at their home.
+  * If a person in your case does not have a lawyer, you can hand-deliver the forms to them or to a family member who is 13 or older at their home.
   * If they do have a lawyer, you can hand-deliver the forms to the lawyer or to the lawyer's office.
 ---
 id: forms assembling
@@ -1074,9 +1128,10 @@ attachment:
       - "delivery_party1_mail_city": ${ delivery_parties[0].delivery_mail_city if delivery_parties[0].knows_delivery_method and delivery_parties[0].mail_delivery else '' }
       - "delivery_party1_mail_state": ${ state_name(delivery_parties[0].delivery_mail_state) if delivery_parties[0].knows_delivery_method and delivery_parties[0].mail_delivery else '' }
       - "delivery_party1_hand_address": ${ delivery_parties[0].hand_delivery_address.on_one_line(bare=True) if delivery_parties[0].knows_delivery_method and delivery_parties[0].mail_delivery else '' }
+      - "is_delivery_party1_jail_yes": ${ True if delivery_parties[0].knows_delivery_method and delivery_parties[0].jail_delivery else '' }
       - "delivery_party1_jail_name": ${ delivery_parties[0].delivery_jail_name if delivery_parties[0].knows_delivery_method and delivery_parties[0].jail_delivery else '' }
-      - "is_delivery_party1_end": ${ True if delivery_parties.number() == 1 else '' }
-      - "is_delivery_party2": ${ True if delivery_parties.number() > 1 else '' }
+      - "is_delivery_party1_end": ${ delivery_parties.number() == 1 }
+      - "is_delivery_party2": ${ delivery_parties.number() > 1 }
 
       - "delivery_party2_name_full": | 
           % if delivery_parties[1].is_represented:
@@ -1093,12 +1148,13 @@ attachment:
       - "delivery_party2_date": ${ delivery_parties[1].delivery_date if delivery_parties[1].knows_delivery_method and delivery_parties[1].knows_delivery_date else '' }
       - "delivery_party2_time": ${ format_time(delivery_parties[1].delivery_time, format='h:mm a') if delivery_parties[1].knows_delivery_method and delivery_parties[1].knows_delivery_time else '' }
       
-      - "is_delivery_party2_electronic": ${  }
-      - "is_delivery_party2_not_electronic": ${  }
-      - "delivery_party2_mail_city": ${  }
-      - "delivery_party2_mail_state": ${  }
-      - "delivery_party2_hand_address": ${  }
-      - "delivery_party2_jail_name": ${  }
+      - "is_delivery_party2_electronic": ${ True if delivery_parties[1].knows_delivery_method and ( delivery_parties[1].efm_delivery or delivery_parties[1].email_delivery ) else '' }
+      - "is_delivery_party2_not_electronic": ${ True if delivery_parties[1].knows_delivery_method and ( delivery_parties[1].mail_delivery or delivery_parties[1].hand_delivery or delivery_parties[1].jail_delivery ) else '' }
+      - "delivery_party2_mail_city": ${ delivery_parties[1].delivery_mail_city if delivery_parties[1].knows_delivery_method and delivery_parties[1].mail_delivery else '' }
+      - "delivery_party2_mail_state": ${ state_name(delivery_parties[1].delivery_mail_state) if delivery_parties[1].knows_delivery_method and delivery_parties[1].mail_delivery else '' }
+      - "delivery_party2_hand_address": ${ delivery_parties[1].hand_delivery_address.on_one_line(bare=True) if delivery_parties[1].knows_delivery_method and delivery_parties[1].mail_delivery else '' }
+      - "is_delivery_party2_jail_yes": ${ True if delivery_parties[1].knows_delivery_method and delivery_parties[1].jail_delivery else '' }
+      - "delivery_party2_jail_name": ${ delivery_parties[1].delivery_jail_name if delivery_parties[1].knows_delivery_method and delivery_parties[1].jail_delivery else '' }
 
       - "is_additional_proof_delivery_yes": ${ delivery_parties.number() > 2 }
 ---
@@ -1423,11 +1479,14 @@ review:
       % if x.email_delivery == True:
         * Email
       % endif
+      % if x.mail_delivery == True:
+        * US mail or delivery company
+      % endif
       % if x.hand_delivery == True:
         * Hand
       % endif
-      % if x.mail_delivery == True:
-        * US mail or delivery company
+      % if x.jail_delivery == True:
+        * Mail from prison or jail
       % endif
     show if: x.knows_delivery_method
   - Edit: x.delivery_date
