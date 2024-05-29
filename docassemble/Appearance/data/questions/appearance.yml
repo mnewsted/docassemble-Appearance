@@ -465,7 +465,9 @@ fields:
       This email address will appear on your court forms. Be sure to check 
       this email daily, otherwise you may miss important information about 
       your case.
-    show if: users[0].has_email_address      
+    show if:
+      variable: users[0].has_email_address
+      is: True
   - Email address: users[0].email    
     datatype: email
     show if: 
@@ -729,11 +731,10 @@ fields:
       The court's e-filing system could be any approved electronic filing service provider (EFSP).
   - Email: users[i].email_delivery
     datatype: yesnowide
-  - Email address: users[i].delivery_email
+  - Email address (for e-filing system or email delivery): users[i].delivery_email
     datatype: email
-    show if: 
-      variable: users[i].email_delivery
-      is: True
+    js show if: 
+      val("users[i].efm_delivery") == true || val("users[i].email_delivery") == true
     required: False
   - US mail or delivery company (like UPS or FedEx): users[i].mail_delivery
     datatype: yesnowide
@@ -824,11 +825,10 @@ fields:
       The court's e-filing system could be any approved electronic filing service provider (EFSP).
   - Email: other_parties[i].email_delivery
     datatype: yesnowide
-  - Email address: other_parties[i].delivery_email
+  - Email address (for e-filing system or email delivery): other_parties[i].delivery_email
     datatype: email
-    show if: 
-      variable: other_parties[i].email_delivery
-      is: True
+    js show if: 
+      val("other_parties[i].efm_delivery") == true || val("other_parties[i].email_delivery") == true
     required: False
   - US mail or delivery company (like UPS or FedEx): other_parties[i].mail_delivery
     datatype: yesnowide
