@@ -64,17 +64,11 @@ code: |
   trial_court
   case_number
   trial_with
-  # removed e-filing instructions since there is now a separate jury demand
-  #if trial_with != "judge only":
-  #  jury_demand_filing_info
 
   set_progress(60)
   nav.set_section('section_delivery')
   delivery_intro
-  #if delivery_parties.number() > 8:
-  #  extra_delivery_forms
-  set_progress(75)
-  #for person in delivery_parties[:8]:
+  set_progress(70)
   for person in delivery_parties:
     if person.is_represented:
       person.lawyer.name.first
@@ -85,18 +79,10 @@ code: |
 
   hand_delivery_info
 
-  #for person in delivery_parties[:8]:
-  #  if person.knows_delivery_method == False or person.hand_delivery == True:
-  #    hand_delivery_info
-      
   set_progress(80)
   nav.set_section('section_about_you')
   users[0].address.address
   users[0].phone_number
-
-  # removed separate email question now that we are using combined contact info page
-  #if users[0].email_notice == True:
-  #  users[0].email
   pronouns_none
   prefix_none
   
@@ -359,6 +345,7 @@ subquestion: |
   ${ collapse_template(case_number_help) }  
 fields:
   - Case number: case_number
+    maxlength: 19
 ---
 template: case_number_help
 subject: |
@@ -385,9 +372,9 @@ subquestion: |
   To learn more, read ILAO's article about [**jury trials and judge trials**](https://www.illinoislegalaid.org/node/178441).
 field: trial_with
 choices:
-  - A judge: judge only
-  - A judge and a 6-person jury: judge and six-person jury
-  - A judge and a 12-person jury: judge and twelve-person jury
+  - A judge: Judge only
+  - A judge and a 6-person jury: Judge and six-person jury
+  - A judge and a 12-person jury: Judge and twelve-person jury
 ---
 template: jury_trial_help
 subject: |
@@ -408,37 +395,6 @@ subquestion: |
   
   Check with [**Illinois Court Help**](https://ilcourthelp.gov) or call (833) 411-1121. You can also ask your local circuit clerk.
  
----
-#id: phone number
-#question: |
-#  What is your phone number?
-#subquestion: |
-#  If you do not want to list your phone number on your form, leave this blank.
-#fields:
-#  - Phone: users[0].phone_number
-#    datatype: al_international_phone
-#    required: False
-#---
-#id: notice by email
-#question: |
-#  Do you have an email address?
-#subquestion: |
-#  If you have an email address, you must list it so the court and other parties can contact you about this case.
-#fields:
-#  - "Email?": users[0].email_notice
-#    datatype: yesnoradio
-#---
-#id: email address
-#question: |
-#  What email address do you want to list on your court forms?
-#subquestion: |
-#  If you do not want to enter your personal email address, you can create a new email account to get email about your case.
-#  
-#  Be sure to check this email daily, otherwise you may miss important information about your case.
-#fields:
-#  - Email address: users[0].email    
-#    datatype: email
-#    #required: False
 ---
 id: your contact information
 question: |
@@ -603,7 +559,7 @@ field: x.is_represented
 choices:
   - Yes: True
   - No: False
-  - I don't know: null 
+  - I don't know.: null 
 # note: null will be None in review screen
 ---
 id: add lawyer
@@ -988,10 +944,6 @@ objects:
   - appearance_attachment: ALDocument.using(title="Appearance", filename="appearance.pdf", has_addendum=False)
   - appearance_instructions: ALDocument.using(title="Instructions", filename="instructions.pdf", has_addendum=False)
   - jury_request: ALDocument.using(title="Jury Request", filename="jury_request.pdf", has_addendum=False)
-#  - appearance_additional: ALDocument.using(title="Additional Proof of Delivery", filename="appearance_additional_proof_delivery.pdf", has_addendum=False)
-#  - appearance_additional_2: ALDocument.using(title="Additional Proof of Delivery 2", filename="appearance_additional_proof_delivery_2.pdf", has_addendum=False)
-#  - appearance_additional_3: ALDocument.using(title="Additional Proof of Delivery 3", filename="appearance_additional_proof_delivery_3.pdf", has_addendum=False)
-#  - appearance_additional_blank: ALDocument.using(title="Additional Proof of Delivery (blank)", filename="appearance_additional_proof_delivery_blank.pdf", has_addendum=False)
 ---
 #This needs to be a generic object because the delivery parties list entries point to entries in other lists.
 generic object: ALIndividual
@@ -999,12 +951,13 @@ objects:
   - x.additional_proof: ALDocument.using(title="Additional Proof of Delivery", filename="additional_proof_of_delivery.pdf", has_addendum=False)
 ---
 objects:
-  - additional_delivery_bundle: ALDocumentBundle.using(elements=[], title= "Additional Proof of Delivery", filename="additional_proof_of_delivery.pdf", has_addendum=False, enabled=True)
+  - additional_delivery_bundle: ALDocumentBundle.using(elements=[], title= "Additional Proof of Delivery", filename="additional_proof_of_delivery.pdf", has_addendum=False)
 ---
 reconsider: True
 code: |
   #deliveries_to_bundle will be used as the elements for the additional_delivery_bundle object created in the above block. This is its initial definition for the Appearance.
   deliveries_to_bundle = []
+  additional_delivery_bundle.enabled = False
 
   #enumerate allows us to reference the index in a for loop. This for loop appends each additional proof template to the deliveries_to_bundle object and sets the enabled trait for those templates.
   for index, party in enumerate(delivery_parties):
@@ -1014,6 +967,7 @@ code: |
     #Because the additional delivery form can list two parties, we don't need a form for each delivery party beyond the first two. Instead, we only append party.additional_proof if party's index is an even number, as a party with an odd number will be included on the previous party.additional_proof
     elif (index % 2) == 0:
       party.additional_proof.enabled = True
+      additional_delivery_bundle.enabled = True
       #We only need to append the party.additional proof objects that we include.
       deliveries_to_bundle.append(party.additional_proof)
       #This if statement prevents an out of index range error. If we created the party.second_person without it, an out of index range would occur if party is the last entry in the delivery_parties list.
@@ -1028,14 +982,17 @@ code: |
   refresh_delivery_bundle = True
 
 ---
+reconsider: True
 code: |
   appearance_attachment.enabled = True
   appearance_instructions.enabled = True
     
-  if trial_with == "judge only":
+  if trial_with == "Judge only":
     jury_request.enabled = False
+    jury_request_bundle.enabled = False
   else:
     jury_request.enabled = True
+    jury_request_bundle.enabled = True
 
 ---
 objects:
@@ -1044,10 +1001,7 @@ objects:
 ---
 objects:
   - appearance_single_pdf_bundle: ALDocumentBundle.using(elements=[appearance_attachment, additional_delivery_bundle], filename="appearance.pdf", title="Appearance", enabled=True)
-  - jury_request_bundle: ALDocumentBundle.using(elements=[jury_request, additional_delivery_bundle], filename="jury_request.pdf", title="Jury Request", enabled=True)
----
-#objects:
-#  - appearance_single_pdf_bundle: ALDocumentBundle.using(elements=[appearance_attachment, appearance_additional, appearance_additional_2, appearance_additional_3], filename="appearance.pdf", title="Appearance", enabled=True)
+  - jury_request_bundle: ALDocumentBundle.using(elements=[jury_request, additional_delivery_bundle], filename="jury_request.pdf", title="Jury Request")
 ---
 attachment:
   variable name: appearance_instructions[i]
@@ -1215,8 +1169,8 @@ attachment:
       - "delivery_party1_hand_address": ${ x.hand_delivery_address.on_one_line(bare=True) if x.knows_delivery_method and x.mail_delivery else '' }
       - "is_delivery_party1_jail_yes": ${ True if x.knows_delivery_method and x.jail_delivery else '' }
       - "delivery_party1_jail_name": ${ x.delivery_jail_name if x.knows_delivery_method and x.jail_delivery else '' }
-      - "is_delivery_party1_end": ${ delivery_parties.number() == 1 }
-      - "is_delivery_party2": ${ delivery_parties.number() > 1 }
+      - "is_delivery_party1_end": ${ (delivery_parties.index(x) + 1) == delivery_parties.number() } # true if this is the last delivery party
+      - "is_delivery_party2": ${ (delivery_parties.index(x) + 1) < delivery_parties.number() } # true if there are more delivery parties
 
       - "delivery_party2_name_full": | 
           % if x.second_person.is_represented:
@@ -1297,8 +1251,8 @@ attachment:
       - "plaintiff_cb": ${ user_ask_role == 'plaintiff' }
       - "defendant_cb": ${ user_ask_role == 'defendant' }
 
-      - "jury_six": ${ trial_with == "judge and six-person jury" }
-      - "jury_twelve": ${ trial_with == "judge and twelve-person jury" }
+      - "jury_six": ${ trial_with == "Judge and six-person jury" }
+      - "jury_twelve": ${ trial_with == "Judge and twelve-person jury" }
       
       - "e_sign_name__1": ${ users[0].name.full(middle="full") if e_signature else '' }
       - "e_sign_name__2": ${ users[0].name.full(middle="full") if e_signature else '' }
@@ -1352,184 +1306,6 @@ attachment:
       - "delivery_party2_jail_name": ${ delivery_parties[1].delivery_jail_name if delivery_parties[1].knows_delivery_method and delivery_parties[1].jail_delivery else '' }
 
       - "is_additional_proof_delivery_yes": ${ delivery_parties.number() > 2 }
-
----
-attachment:
-  variable name: appearance_additional[i]
-  name: appearance_additional
-  filename: appearance-additional-delivery
-  skip undefined: True
-  editable: False
-  pdf template file: appearance_additional_proof_delivery_edited.pdf
-  fields:
-      - "trial_court_county": ${ trial_court.address.county.upper() }
-      - "case_number__1": ${ case_number }
-      - "case_number__2": ${ case_number }
-      - "plaintiffs": ${ users.full_names() if user_ask_role == 'plaintiff' else other_parties.full_names() }
-      - "defendants": ${ other_parties.full_names() if user_ask_role == 'plaintiff' else users.full_names() }
-      - "form_to_be_delivered": ${ form_name }
-      - "delivery_party1_name_full": | 
-          % if delivery_parties[2].is_represented:
-          ${ delivery_parties[2].lawyer.name.full(middle="full") }, (lawyer for ${ delivery_parties[2].name.full(middle="full") })
-          % else:
-          ${ delivery_parties[2].name.full(middle="full") }
-          % endif
-      - "delivery_party1_mail_address_on_one_line": ${ delivery_parties[2].address.on_one_line(bare=True) }
-      - "delivery_party1_email": ${ delivery_parties[2].delivery_email if delivery_parties[2].knows_delivery_method else '' }
-      - "is_delivery_party1_hand_yes": ${ delivery_parties[2].hand_delivery if delivery_parties[2].knows_delivery_method else '' }
-      - "is_delivery_party1_mail_yes": ${ delivery_parties[2].mail_delivery if delivery_parties[2].knows_delivery_method else '' }
-      - "is_delivery_party1_efm_yes": ${ delivery_parties[2].efm_delivery if delivery_parties[2].knows_delivery_method else '' }
-      - "is_delivery_party1_email_yes": ${ delivery_parties[2].email_delivery if delivery_parties[2].knows_delivery_method else '' }
-      - "delivery_party1_date": ${ delivery_parties[2].delivery_date if delivery_parties[2].knows_delivery_method and delivery_parties[2].knows_delivery_date else '' }
-      - "delivery_party1_time": ${ format_time(delivery_parties[2].delivery_time, format='h:mm') if delivery_parties[2].knows_delivery_method and delivery_parties[2].knows_delivery_time else '' }
-      - "is_delivery_party1_am_yes": ${ True if delivery_parties[2].knows_delivery_method and format_time(delivery_parties[2].delivery_time, format='a')=='AM' else '' }
-      - "is_delivery_party1_am_no": ${ True if delivery_parties[2].knows_delivery_method and format_time(delivery_parties[2].delivery_time, format='a')=='PM' else '' }
-      
-      - "delivery_party2_name_full": | 
-          % if delivery_parties[3].is_represented:
-          ${ delivery_parties[3].lawyer.name.full(middle="full") }, (lawyer for ${ delivery_parties[3].name.full(middle="full") })
-          % else:
-          ${ delivery_parties[3].name.full(middle="full") }
-          % endif
-      - "delivery_party2_mail_address_on_one_line": ${ delivery_parties[3].address.on_one_line(bare=True) }
-      - "delivery_party2_email": ${ delivery_parties[3].delivery_email if delivery_parties[3].knows_delivery_method else '' }
-      - "is_delivery_party2_hand_yes": ${ delivery_parties[3].hand_delivery if delivery_parties[3].knows_delivery_method else '' }
-      - "is_delivery_party2_mail_yes": ${ delivery_parties[3].mail_delivery if delivery_parties[3].knows_delivery_method else '' }
-      - "is_delivery_party2_efm_yes": ${ delivery_parties[3].efm_delivery if delivery_parties[3].knows_delivery_method else '' }
-      - "is_delivery_party2_email_yes": ${ delivery_parties[3].email_delivery if delivery_parties[3].knows_delivery_method else '' }
-      - "delivery_party2_date": ${ delivery_parties[3].delivery_date if delivery_parties[3].knows_delivery_method and delivery_parties[3].knows_delivery_date else '' }
-      - "delivery_party2_time": ${ format_time(delivery_parties[3].delivery_time, format='h:mm') if delivery_parties[3].knows_delivery_method and delivery_parties[3].knows_delivery_time else '' }
-      - "is_delivery_party2_am_yes": ${ True if delivery_parties[3].knows_delivery_method and format_time(delivery_parties[3].delivery_time, format='a')=='AM' else '' }
-      - "is_delivery_party2_am_no": ${ True if delivery_parties[3].knows_delivery_method and format_time(delivery_parties[3].delivery_time, format='a')=='PM' else '' }
-
-      - "user": ${ users[0].name.full(middle="full") }
-      - "user_mail_address_line_one": ${ users[0].address.line_one(bare=True) }
-      - "user_mail_address_city_state_zip": ${ users[0].address.line_two() }
-      - "user_phone_number": ${ phone_number_formatted(users[0].phone_number) }
-      - "user_email": ${ users[0].email if users[0].email_notice else '' }
-      - "e_sign_name": ${ users[0].name.full(middle="full") if e_signature else '' }
----
-attachment:
-  variable name: appearance_additional_2[i]
-  name: appearance_additional_2
-  filename: appearance-additional-delivery-2
-  skip undefined: True
-  editable: False
-  pdf template file: appearance_additional_proof_delivery_edited.pdf
-  fields:
-      - "trial_court_county": ${ trial_court.address.county.upper() }
-      - "case_number__1": ${ case_number }
-      - "case_number__2": ${ case_number }
-      - "plaintiffs": ${ users.full_names() if user_ask_role == 'plaintiff' else other_parties.full_names() }
-      - "defendants": ${ other_parties.full_names() if user_ask_role == 'plaintiff' else users.full_names() }
-      - "form_to_be_delivered": ${ form_name }
-
-      - "delivery_party1_name_full": | 
-          % if delivery_parties[4].is_represented:
-          ${ delivery_parties[4].lawyer.name.full(middle="full") }, (lawyer for ${ delivery_parties[4].name.full(middle="full") })
-          % else:
-          ${ delivery_parties[4].name.full(middle="full") }
-          % endif
-      - "delivery_party1_mail_address_on_one_line": ${ delivery_parties[4].address.on_one_line(bare=True) }
-      - "delivery_party1_email": ${ delivery_parties[4].delivery_email if delivery_parties[4].knows_delivery_method else '' }
-      - "is_delivery_party1_hand_yes": ${ delivery_parties[4].hand_delivery if delivery_parties[4].knows_delivery_method else '' }
-      - "is_delivery_party1_mail_yes": ${ delivery_parties[4].mail_delivery if delivery_parties[4].knows_delivery_method else '' }
-      - "is_delivery_party1_efm_yes": ${ delivery_parties[4].efm_delivery if delivery_parties[4].knows_delivery_method else '' }
-      - "is_delivery_party1_email_yes": ${ delivery_parties[4].email_delivery if delivery_parties[4].knows_delivery_method else '' }
-      - "delivery_party1_date": ${ delivery_parties[4].delivery_date if delivery_parties[4].knows_delivery_method and delivery_parties[4].knows_delivery_date else '' }
-      - "delivery_party1_time": ${ format_time(delivery_parties[4].delivery_time, format='h:mm') if delivery_parties[4].knows_delivery_method and delivery_parties[4].knows_delivery_time else '' }
-      - "is_delivery_party1_am_yes": ${ True if delivery_parties[4].knows_delivery_method and format_time(delivery_parties[4].delivery_time, format='a')=='AM' else '' }
-      - "is_delivery_party1_am_no": ${ True if delivery_parties[4].knows_delivery_method and format_time(delivery_parties[4].delivery_time, format='a')=='PM' else '' }
-      
-      - "delivery_party2_name_full": | 
-          % if delivery_parties[5].is_represented:
-          ${ delivery_parties[5].lawyer.name.full(middle="full") }, (lawyer for ${ delivery_parties[5].name.full(middle="full") })
-          % else:
-          ${ delivery_parties[5].name.full(middle="full") }
-          % endif
-      - "delivery_party2_mail_address_on_one_line": ${ delivery_parties[5].address.on_one_line(bare=True) }
-      - "delivery_party2_email": ${ delivery_parties[5].delivery_email if delivery_parties[5].knows_delivery_method else '' }
-      - "is_delivery_party2_hand_yes": ${ delivery_parties[5].hand_delivery if delivery_parties[5].knows_delivery_method else '' }
-      - "is_delivery_party2_mail_yes": ${ delivery_parties[5].mail_delivery if delivery_parties[5].knows_delivery_method else '' }
-      - "is_delivery_party2_efm_yes": ${ delivery_parties[5].efm_delivery if delivery_parties[5].knows_delivery_method else '' }
-      - "is_delivery_party2_email_yes": ${ delivery_parties[5].email_delivery if delivery_parties[5].knows_delivery_method else '' }
-      - "delivery_party2_date": ${ delivery_parties[5].delivery_date if delivery_parties[5].knows_delivery_method and delivery_parties[5].knows_delivery_date else '' }
-      - "delivery_party2_time": ${ format_time(delivery_parties[5].delivery_time, format='h:mm') if delivery_parties[5].knows_delivery_method and delivery_parties[5].knows_delivery_time else '' }
-      - "is_delivery_party2_am_yes": ${ True if delivery_parties[5].knows_delivery_method and format_time(delivery_parties[5].delivery_time, format='a')=='AM' else '' }
-      - "is_delivery_party2_am_no": ${ True if delivery_parties[5].knows_delivery_method and format_time(delivery_parties[5].delivery_time, format='a')=='PM' else '' }
-
-      - "user": ${ users[0].name.full(middle="full") }
-      - "user_mail_address_line_one": ${ users[0].address.line_one(bare=True) }
-      - "user_mail_address_city_state_zip": ${ users[0].address.line_two() }
-      - "user_phone_number": ${ phone_number_formatted(users[0].phone_number) }
-      - "user_email": ${ users[0].email if users[0].email_notice else '' }
-      - "e_sign_name": ${ users[0].name.full(middle="full") if e_signature else '' }
----
-attachment:
-  variable name: appearance_additional_3[i]
-  name: appearance_additional_3
-  filename: appearance-additional-delivery-3
-  skip undefined: True
-  editable: False
-  pdf template file: appearance_additional_proof_delivery_edited.pdf
-  fields:
-      - "trial_court_county": ${ trial_court.address.county.upper() }
-      - "case_number__1": ${ case_number }
-      - "case_number__2": ${ case_number }
-      - "plaintiffs": ${ users.full_names() if user_ask_role == 'plaintiff' else other_parties.full_names() }
-      - "defendants": ${ other_parties.full_names() if user_ask_role == 'plaintiff' else users.full_names() }
-      - "form_to_be_delivered": ${ form_name }
-
-      - "delivery_party1_name_full": | 
-          % if delivery_parties[6].is_represented:
-          ${ delivery_parties[6].lawyer.name.full(middle="full") }, (lawyer for ${ delivery_parties[6].name.full(middle="full") })
-          % else:
-          ${ delivery_parties[6].name.full(middle="full") }
-          % endif
-      - "delivery_party1_mail_address_on_one_line": ${ delivery_parties[6].address.on_one_line(bare=True) }
-      - "delivery_party1_email": ${ delivery_parties[6].delivery_email if delivery_parties[6].knows_delivery_method else '' }
-      - "is_delivery_party1_hand_yes": ${ delivery_parties[6].hand_delivery if delivery_parties[6].knows_delivery_method else '' }
-      - "is_delivery_party1_mail_yes": ${ delivery_parties[6].mail_delivery if delivery_parties[6].knows_delivery_method else '' }
-      - "is_delivery_party1_efm_yes": ${ delivery_parties[6].efm_delivery if delivery_parties[6].knows_delivery_method else '' }
-      - "is_delivery_party1_email_yes": ${ delivery_parties[6].email_delivery if delivery_parties[6].knows_delivery_method else '' }
-      - "delivery_party1_date": ${ delivery_parties[6].delivery_date if delivery_parties[6].knows_delivery_method and delivery_parties[6].knows_delivery_date else '' }
-      - "delivery_party1_time": ${ format_time(delivery_parties[6].delivery_time, format='h:mm') if delivery_parties[6].knows_delivery_method and delivery_parties[6].knows_delivery_time else '' }
-      - "is_delivery_party1_am_yes": ${ True if delivery_parties[6].knows_delivery_method and format_time(delivery_parties[6].delivery_time, format='a')=='AM' else '' }
-      - "is_delivery_party1_am_no": ${ True if delivery_parties[6].knows_delivery_method and format_time(delivery_parties[6].delivery_time, format='a')=='PM' else '' }
-      
-      - "delivery_party2_name_full": | 
-          % if delivery_parties[7].is_represented:
-          ${ delivery_parties[7].lawyer.name.full(middle="full") }, (lawyer for ${ delivery_parties[7].name.full(middle="full") })
-          % else:
-          ${ delivery_parties[7].name.full(middle="full") }
-          % endif
-      - "delivery_party2_mail_address_on_one_line": ${ delivery_parties[7].address.on_one_line(bare=True) }
-      - "delivery_party2_email": ${ delivery_parties[7].delivery_email if delivery_parties[7].knows_delivery_method else '' }
-      - "is_delivery_party2_hand_yes": ${ delivery_parties[7].hand_delivery if delivery_parties[7].knows_delivery_method else '' }
-      - "is_delivery_party2_mail_yes": ${ delivery_parties[7].mail_delivery if delivery_parties[7].knows_delivery_method else '' }
-      - "is_delivery_party2_efm_yes": ${ delivery_parties[7].efm_delivery if delivery_parties[7].knows_delivery_method else '' }
-      - "is_delivery_party2_email_yes": ${ delivery_parties[7].email_delivery if delivery_parties[7].knows_delivery_method else '' }
-      - "delivery_party2_date": ${ delivery_parties[7].delivery_date if delivery_parties[7].knows_delivery_method and delivery_parties[7].knows_delivery_date else '' }
-      - "delivery_party2_time": ${ format_time(delivery_parties[7].delivery_time, format='h:mm') if delivery_parties[7].knows_delivery_method and delivery_parties[7].knows_delivery_time else '' }
-      - "is_delivery_party2_am_yes": ${ True if delivery_parties[7].knows_delivery_method and format_time(delivery_parties[7].delivery_time, format='a')=='AM' else '' }
-      - "is_delivery_party2_am_no": ${ True if delivery_parties[7].knows_delivery_method and format_time(delivery_parties[7].delivery_time, format='a')=='PM' else '' }
-      
-      - "user": ${ users[0].name.full(middle="full") }
-      - "user_mail_address_line_one": ${ users[0].address.line_one(bare=True) }
-      - "user_mail_address_city_state_zip": ${ users[0].address.line_two() }
-      - "user_phone_number": ${ phone_number_formatted(users[0].phone_number) }
-      - "user_email": ${ users[0].email if users[0].email_notice else '' }
-      - "e_sign_name": ${ users[0].name.full(middle="full") if e_signature else '' }
----
-attachment:
-  variable name: appearance_additional_blank[i]
-  name: appearance_additional_blank
-  filename: appearance-additional-delivery-blank
-  skip undefined: True
-  editable: True
-  pdf template file: appearance_additional_proof_delivery_edited.pdf
-  fields:
-      - "trial_court_county": ${ "" }
 ---
 ############### Review page
 id: review screen
@@ -1542,9 +1318,9 @@ review:
   - Edit: user_ask_role
     button: |
       % if user_ask_role == "plaintiff":
-        **Your role:** plaintiff or petitioner
+        **Your role:** Plaintiff or Petitioner
       % else:
-        **Your role:** defendant or respondent
+        **Your role:** Defendant or Respondent
       % endif
   - Edit: users.revisit
     button: |
@@ -1560,6 +1336,14 @@ review:
       % for my_var in other_parties:
         * ${ my_var.name.full(middle="full") }
       % endfor
+  - Edit: in_re_check
+    button: |
+      **Does the court case have "In re:" in the name?**  
+      ${word(yesno(in_re_check))}
+  - Edit: in_re_label
+    button: |
+      **In re:** ${in_re_label}
+    show if: in_re_check
   - Edit: 
       - trial_court_index
       - recompute:
@@ -1743,9 +1527,9 @@ review:
   - Edit: user_ask_role
     button: |
       % if user_ask_role == "plaintiff":
-        **Your role:** plaintiff or petitioner
+        **Your role:** Plaintiff or Petitioner
       % else:
-        **Your role:** defendant or respondent
+        **Your role:** Defendant or Respondent
       % endif
   - Edit: users.revisit
     button: |
@@ -1761,6 +1545,14 @@ review:
       % for my_var in other_parties:
         * ${ my_var.name.full(middle="full") }
       % endfor
+  - Edit: in_re_check
+    button: |
+      **Does the court case have "In re:" in the name?**  
+      ${word(yesno(in_re_check))}
+  - Edit: in_re_label
+    button: |
+      **In re:** ${in_re_label}
+    show if: in_re_check
   - Edit: 
       - trial_court_index
       - recompute:
