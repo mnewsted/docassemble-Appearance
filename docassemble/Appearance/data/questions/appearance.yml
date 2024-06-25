@@ -211,6 +211,18 @@ subject: |
 content: |  
   You can also file an Appearance if you started the lawsuit. Usually, you only need to file an Appearance if you had a lawyer in the case before, but now you want to represent yourself.
 ---
+id: user name
+sets:
+    - users[0].name.first
+    - users[0].name.last
+    - users[0].name.middle
+    - users[0].name.suffix
+question:  |
+  What is your name?
+fields:
+  - code: |
+      users[0].name_fields()
+---
 id: in re check
 question: |
  Does the court case have the words "**In re:**" in the name?
@@ -239,6 +251,12 @@ question: |
   Is anyone else adding their name to this form with you?
   % endif
 subquestion: |
+  % if user_ask_role == 'plaintiff':
+  You said you are the **Plaintiff** or the **Petitioner.** The other people on your side of the case would be co-plaintiffs or co-petitioners.
+  % else:
+  You said you are the **Defendant** or the **Respondent.** The other people on your side of the case would be co-defendants or co-respondents.
+  % endif
+    
   % if len(users.elements) > 1:  
   So far you have told us about ${comma_and_list(users.complete_elements().full_names())}.
   % endif  
@@ -290,6 +308,12 @@ question: |
   Is there another **plaintiff** or **petitioner** in this case?
   % endif
 subquestion: |
+  % if user_ask_role == 'plaintiff':
+  You said you are the **Plaintiff** or the **Petitioner.** The people on the other side of the case would be defendants or respondents.
+  % else:
+  You said you are the **Defendant** or the **Respondent.** The people on the other side of the case would be plaintiffs or petitioners.
+  % endif
+
   % if len(other_parties.elements) >= 1:  
   So far you have told us about ${comma_and_list(other_parties.complete_elements().full_names())}.
   % endif
@@ -1421,6 +1445,7 @@ review:
 #needs: yes_no_unknown
 id: delivery party review screen
 continue button field: x.review_delivery
+section: Delivery details
 generic object: ALIndividual
 question: |
   Edit ${ x.name.full(middle="full") }'s information
@@ -1488,6 +1513,7 @@ review:
 ---
 id: users review screen
 continue button field: users.revisit
+section: Case info
 question: |
   Edit the ${ user_ask_role }s
 subquestion: |
@@ -1507,6 +1533,7 @@ confirm: True
 ---
 id: other parties review screen
 continue button field: other_parties.revisit
+section: Case info
 question: |
   % if user_ask_role == "plaintiff":
     Edit the defendants
@@ -1530,6 +1557,7 @@ confirm: True
 ---
 id: case info review screen
 event: section_case_info
+section: Case info
 question: |
   Case info
 subquestion: |
@@ -1582,6 +1610,7 @@ review:
 ---
 id: delivery info review screen
 event: section_delivery
+section: Delivery details
 question: |
   Delivery details
 subquestion: |
@@ -1605,6 +1634,7 @@ review:
 ---
 id: about you review screen
 event: section_about_you
+section: About you
 question: |
   About you
 subquestion: |
