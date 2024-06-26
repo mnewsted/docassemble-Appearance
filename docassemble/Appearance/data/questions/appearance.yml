@@ -197,7 +197,7 @@ question: |
 subquestion: |
   If you received a Complaint and Summons, you have been sued. You need to tell the court you want to participate in your case. In some cases, you need to file an **{Answer}** to respond to the Complaint.
   
-  If you do not respond, you can be found in default, and the court can rule against you. In some cases, like evictions, you do not need to file an **{Appearance}**. Instead, you can attend your court hearing.
+  If you do not respond, you can be found in default, and the court can rule against you. In some cases, like evictions, you do not need to file a written **{Appearance}**. Instead, you can attend your court hearing.
   
   To learn more, read ILAO's article about [**responding to a lawsuit**](https://www.illinoislegalaid.org/node/32236).
   
@@ -227,9 +227,9 @@ id: in re check
 question: |
  Does the court case have the words "**In re:**" in the name?
 subquestion: |
-  Look at the name of the case at the top of the court papers. "In re" is often used in probate, bankruptcy, and some family law cases. For example, a probate case regarding Jane Doe’s estate might be called "In re: Estate of Jane Doe."
+  Look at the name of the case at the top of the court papers. "In re" is often used in probate, guardianship, and some family law cases. For example, a probate case regarding Jane Doe’s estate might be called "In re: Estate of Jane Doe."
   
-  **Note:** If the court papers list the names of people in the case, you can select **No**. For example, if the case title is "In re: Marriage of Julia Smith and Tony Smith," the names you already entered will be put on your forms. 
+  **Note:** If the court papers say "In re:" but also list the names of people in the case, you can select **No**. For example, if the case title is "In re: Marriage of Julia Smith and Tony Smith," the names you already entered will be put on your forms. 
 fields:
   - no label: in_re_check
     datatype: yesnoradio
@@ -437,7 +437,7 @@ subquestion: |
   
   If you do not want to list a phone number on your forms, leave it blank.
 
-  If you have an email address, you must list it. Be sure to check your email daily, otherwise you may miss important information about your case.
+  If you have an email address, you must list it. Be sure to check your email daily, otherwise you may miss important court documents or information about your case.
 
   ${ collapse_template(contact_info_help) }  
 fields:  
@@ -584,7 +584,7 @@ subquestion: |
 
   You must send a copy of your forms to each of them.
 
-  If someone in the case has a lawyer, you only need to send them to their lawyer.
+  If someone in the case has a lawyer, send them to their lawyer.
 ---
 id: has lawyer
 generic object: ALIndividual
@@ -691,7 +691,7 @@ content: |
   * US mail or a delivery company (like UPS or FedEx), or
   * Hand delivery to the party, the party's family member over 13 at their residence, the party's lawyer, or their lawyer's office.
 
-  You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address.
+  If the other party listed an email address on the court documents, you must send the forms to them by email or through the e-filing system. You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address.
   
   If you are in a prison or jail, you can deliver by mail.
 terms:
@@ -708,7 +708,7 @@ question: |
   How will you send your forms to ${ users[i].name.full(middle="full") }?
   % endif
 subquestion: |  
-  You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address. If you are in a prison or jail, you can deliver by mail.
+  If the other party listed an email address on the court documents, you must send the forms to them by email or through the e-filing system. You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address. If you are in a prison or jail, you can deliver by mail.
 
   For best results, complete the Proof of Delivery section and send the forms today.
 
@@ -802,7 +802,7 @@ question: |
   How will you send your forms to ${ other_parties[i].name.full(middle="full") }?
   % endif
 subquestion: |  
-  You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address. If you are in a prison or jail, you can deliver by mail.
+  If the other party listed an email address on the court documents, you must send the forms to them by email or through the e-filing system. You may use US mail or a delivery company, or hand delivery if you or the other party **does not** have an email address. If you are in a prison or jail, you can deliver by mail.
 
   For best results, complete the Proof of Delivery section and send the forms today.
 
