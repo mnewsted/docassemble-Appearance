@@ -1402,15 +1402,15 @@ review:
     button: |
       **Your phone number:**
       ${ phone_number_formatted(users[0].phone_number) }
-  - Edit: users[0].email_notice
+  - Edit: users[0].has_email_address
     button: |
       **Do you have an email address?**
-      ${ word(yesno(users[0].email_notice)) }
+      ${ word(yesno(users[0].has_email_address)) }
   - Edit: users[0].email
     button: |
       **Your email:**
       ${ users[0].email }
-    show if: users[0].email_notice
+    show if: users[0].has_email_address
   - Edit: pronouns_none
     button: |
       **What pronouns do you want the court to use?**
@@ -1652,15 +1652,15 @@ review:
     button: |
       **Your phone number:**
       ${ phone_number_formatted(users[0].phone_number) }
-  - Edit: users[0].email_notice
+  - Edit: users[0].has_email_address
     button: |
       **Do you have an email address?**
-      ${ word(yesno(users[0].email_notice)) }
+      ${ word(yesno(users[0].has_email_address)) }
   - Edit: users[0].email
     button: |
       **Your email:**
       ${ users[0].email }
-    show if: users[0].email_notice
+    show if: users[0].has_email_address
   - Edit: pronouns_none
     button: |
       **What pronouns do you want the court to use?**
