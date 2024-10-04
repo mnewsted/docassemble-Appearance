@@ -1413,29 +1413,56 @@ review:
   - Edit: pronouns_none
     button: |
       **What pronouns do you want the court to use?**
+      
       % if pronouns_none:
-      None specified
+      * None specified
       % else:
-      ${ pronouns }
+      % if pronouns['She/her']:
+      * She/her
+      % endif
+      % if pronouns['He/him']:
+      * He/him
+      % endif
+      % if pronouns['They/them']:
+      * They/them
+      % endif
+      % if pronouns['Other']:
+      * Other
+      % endif
       % endif
   - Edit: other_pronouns
     button: |
       **Other pronouns:**
       ${ other_pronouns }
-    show if: pronouns == 'other'
+    show if: pronouns['Other'] == True
   - Edit: prefix_none
     button: |
       **What prefix do you want the court to use?**
+      
       % if prefix_none:
-      None specified
+      * None specified
       % else:
-      ${ prefix }
+      % if prefix['Ms.']:
+      * Ms.
+      % endif
+      % if prefix['Mrs.']:
+      * Mrs.
+      % endif
+      % if prefix['Mr.']:
+      * Mr.
+      % endif
+      % if prefix['Mx.']:
+      * Mr.
+      % endif
+      % if prefix['Other']:
+      * Other
+      % endif
       % endif
   - Edit: other_prefix
     button: |
       **Other prefix:**
       ${ other_prefix }
-    show if: prefix == 'other'
+    show if: prefix['Other'] == True
   - Edit: e_signature
     button: |
       **Do you want to add your e-signature to your forms?**
@@ -1663,29 +1690,56 @@ review:
   - Edit: pronouns_none
     button: |
       **What pronouns do you want the court to use?**
+      
       % if pronouns_none:
-      None specified
+      * None specified
       % else:
-      ${ pronouns }
+      % if pronouns['She/her']:
+      * She/her
+      % endif
+      % if pronouns['He/him']:
+      * He/him
+      % endif
+      % if pronouns['They/them']:
+      * They/them
+      % endif
+      % if pronouns['Other']:
+      * Other
+      % endif
       % endif
   - Edit: other_pronouns
     button: |
       **Other pronouns:**
       ${ other_pronouns }
-    show if: pronouns == 'other'
+    show if: pronouns['Other'] == True
   - Edit: prefix_none
     button: |
       **What prefix do you want the court to use?**
+      
       % if prefix_none:
-      None specified
+      * None specified
       % else:
-      ${ prefix }
+      % if prefix['Ms.']:
+      * Ms.
+      % endif
+      % if prefix['Mrs.']:
+      * Mrs.
+      % endif
+      % if prefix['Mr.']:
+      * Mr.
+      % endif
+      % if prefix['Mx.']:
+      * Mr.
+      % endif
+      % if prefix['Other']:
+      * Other
+      % endif
       % endif
   - Edit: other_prefix
     button: |
       **Other prefix:**
       ${ other_prefix }
-    show if: prefix == 'other'
+    show if: prefix['Other'] == True
   - Edit: e_signature
     button: |
       **Do you want to add your e-signature to your forms?**
