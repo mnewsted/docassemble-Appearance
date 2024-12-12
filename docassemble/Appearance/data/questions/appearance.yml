@@ -537,11 +537,11 @@ subquestion: |
 
   <div class="alert alert-info ilao-info" role="alert">
     <h6 class="alert-heading">What it means to sign your forms</h6>
-    <p>By signing your court forms, you are certifying that:</p>
+    <p>By signing your <i>Appearance</i> and <i>Jury Request</i> (if any) forms, you are certifying that:</p>
     <p><ul>
-      <li>You read the document,</li>
-      <li>You believe it is true and correct, and</li>
-      <li>You are not filing it to cause delay or for another bad reason.</li>
+      <li>You read the documents,</li>
+      <li>You believe they are true and correct, and</li>
+      <li>You are not filing them to cause delay or for another bad reason.</li>
     </ul></p>
     <p>See the <a href="https://ilcourtsaudio.blob.core.windows.net/antilles-resources/resources/9ce1fce9-895f-463e-b87d-f9b7631f8fde/Rule%20137.pdf"><b>Illinois Supreme Court Rule 137</b></a> for more information.</p>
     <p>By signing the Proof of Delivery section of your forms, you are certifying that:</p>
@@ -1066,7 +1066,7 @@ attachment:
   editable: False
   pdf template file: appearance.pdf
   fields:
-      - "trial_court_county": ${ trial_court.address.county.upper() }
+      - "trial_court_county": ${ trial_court.address.county }
       - "plaintiffs": |
           % if in_re_check:
           ${ in_re_label }
@@ -1126,12 +1126,7 @@ attachment:
       - "other_prefix_cb": ${ True if prefix['Other'] else '' }
       - "other_prefix": ${ other_prefix if prefix['Other'] else '' }
 
-      - "document_name": |
-          % if trial_with == "Judge only":
-          Appearance
-          % else:
-          Appearance and Jury Request
-          % endif
+      - "document_name": ${"Appearance"}
       - "delivery_party1_name_full": | 
           % if delivery_parties[0].is_represented:
           ${ delivery_parties[0].lawyer.name.full(middle="full") }, (lawyer for ${ delivery_parties[0].name.full(middle="full") })
@@ -1329,7 +1324,7 @@ attachment:
   editable: False
   pdf template file: jury_request.pdf
   fields:
-      - "trial_court_county": ${ trial_court.address.county.upper() }
+      - "trial_court_county": ${ trial_court.address.county }
       - "plaintiffs": |
           % if in_re_check:
           ${ in_re_label }
@@ -1383,12 +1378,7 @@ attachment:
       - "e_sign_name__1": ${ users[0].name.full(middle="full") if e_signature else '' }
       - "e_sign_name__2": ${ users[0].name.full(middle="full") if e_signature else '' }
 
-      - "document_name": |
-          % if trial_with == "Judge only":
-          Appearance
-          % else:
-          Appearance and Jury Request
-          % endif
+      - "document_name": ${"Jury Request"}
       - "delivery_party1_name_full": | 
           % if delivery_parties[0].is_represented:
           ${ delivery_parties[0].lawyer.name.full(middle="full") }, (lawyer for ${ delivery_parties[0].name.full(middle="full") })
