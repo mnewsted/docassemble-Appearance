@@ -240,7 +240,7 @@ subquestion: |
   For example, the case could be called "In re: The Will of Elena Black."
 fields:
   - In re:: in_re_label
-    maxlength: 50
+    maxlength: 60
 ---
 id: any other users
 question: |
@@ -344,7 +344,7 @@ question: |
 subquestion: |
   This should be listed near the top on your court papers.
 fields:
-  - no label: trial_court_index
+  - County: trial_court_index
     datatype: integer
     code: |
       court_county_lookup()
@@ -562,17 +562,6 @@ reconsider: True
 code: |
   delivery_parties = DAList("delivery_parties", elements = other_parties + users[1:])
 # changed order to keep it a DAList
----
-id: extra delivery forms required
-continue button field: extra_delivery_forms
-question: |
-  Additional Proof of Delivery
-subquestion: |
-  This program makes the Proof of Delivery forms for up to 8 other parties.
-  
-  You will need to fill out *Additional Proof of Delivery* forms for ${comma_and_list(delivery_parties[8:])}. 
-  
-  You can download blank *Additional Proof of Delivery* forms at the end of this program.
 ---
 id: delivery intro
 continue button field: delivery_intro
@@ -953,7 +942,7 @@ question: |
 subquestion: |
   Your forms are ready. View and download your forms below. Click **Make changes** to fix any mistakes.
 
-  This program does not file your forms with the court or deliver them to other parties in your case. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
+  This program **does not file** your forms with the court or deliver them to other parties in your case. You will need to do this yourself. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
 
   ${ action_button_html(url_action('review_answers'), label=':edit: Make changes', color='success', size="md") }
   
@@ -963,7 +952,7 @@ subquestion: |
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
 
-  **Note:** This program does not file your forms with the court or deliver them to other parties in your case. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
+  **Note:** This program **does not file** your forms with the court or deliver them to other parties in your case. Learn about [**e-filing in Illinois**](https://www.illinoiscourts.gov/eservices/information-for-filers-without-lawyers).
   
   Thank you for using ILAO Easy Forms!
 under: |
@@ -973,6 +962,11 @@ under: |
 
   &nbsp;
   ${ action_button_html(interview_url(i="docassemble.ILAO:feedback.yml", easy_form_interview=ilao_easy_form_url, easy_form_title=ilao_easy_form_title, easy_form_page=current_context().question_id, easy_form_variable=current_context().variable, local=False,reset=1), label=':comment: Was this program helpful?', color="#181c36", size="md", new_window=True) }
+---
+generic object: ALDocumentBundle
+template: x.get_email_copy
+content: |
+  Send a copy of your forms to your email
 ---
 generic object: ALDocumentBundle
 template: x.send_email_template
@@ -1149,7 +1143,7 @@ attachment:
           % if delivery_parties[0].delivery_mail_address != "" and delivery_parties[0].delivery_mail_city != "" and delivery_parties[0].delivery_mail_state != "":
           ${delivery_parties[0].delivery_mail_address }, ${delivery_parties[0].delivery_mail_city}, ${ state_name(delivery_parties[0].delivery_mail_state) }
           % elif delivery_parties[0].delivery_mail_address != "" and delivery_parties[0].delivery_mail_city != "":
-          ${delivery_parties[0].delivery_mail_address }, {delivery_parties[0].delivery_mail_city}
+          ${delivery_parties[0].delivery_mail_address }, ${delivery_parties[0].delivery_mail_city}
           % elif delivery_parties[0].delivery_mail_address != "" and delivery_parties[0].delivery_mail_state != "":
           ${delivery_parties[0].delivery_mail_address }, ${ state_name(delivery_parties[0].delivery_mail_state) }
           % elif delivery_parties[0].delivery_mail_city != "" and delivery_parties[0].delivery_mail_state != "":
@@ -1192,7 +1186,7 @@ attachment:
           % if delivery_parties[1].delivery_mail_address != "" and delivery_parties[1].delivery_mail_city != "" and delivery_parties[1].delivery_mail_state != "":
           ${delivery_parties[1].delivery_mail_address }, ${delivery_parties[1].delivery_mail_city}, ${ state_name(delivery_parties[1].delivery_mail_state) }
           % elif delivery_parties[1].delivery_mail_address != "" and delivery_parties[1].delivery_mail_city != "":
-          ${delivery_parties[1].delivery_mail_address }, {delivery_parties[1].delivery_mail_city}
+          ${delivery_parties[1].delivery_mail_address }, ${delivery_parties[1].delivery_mail_city}
           % elif delivery_parties[1].delivery_mail_address != "" and delivery_parties[1].delivery_mail_state != "":
           ${delivery_parties[1].delivery_mail_address }, ${ state_name(delivery_parties[1].delivery_mail_state) }
           % elif delivery_parties[1].delivery_mail_city != "" and delivery_parties[1].delivery_mail_state != "":
@@ -1252,7 +1246,7 @@ attachment:
           % if x.delivery_mail_address != "" and x.delivery_mail_city != "" and x.delivery_mail_state != "":
           ${x.delivery_mail_address }, ${x.delivery_mail_city}, ${ state_name(x.delivery_mail_state) }
           % elif x.delivery_mail_address != "" and x.delivery_mail_city != "":
-          ${x.delivery_mail_address }, {x.delivery_mail_city}
+          ${x.delivery_mail_address }, ${x.delivery_mail_city}
           % elif x.delivery_mail_address != "" and x.delivery_mail_state != "":
           ${x.delivery_mail_address }, ${ state_name(x.delivery_mail_state) }
           % elif x.delivery_mail_city != "" and x.delivery_mail_state != "":
@@ -1296,7 +1290,7 @@ attachment:
           % if x.second_person.delivery_mail_address != "" and x.second_person.delivery_mail_city != "" and x.second_person.delivery_mail_state != "":
           ${x.second_person.delivery_mail_address }, ${x.second_person.delivery_mail_city}, ${ state_name(x.second_person.delivery_mail_state) }
           % elif x.second_person.delivery_mail_address != "" and x.second_person.delivery_mail_city != "":
-          ${x.second_person.delivery_mail_address }, {x.second_person.delivery_mail_city}
+          ${x.second_person.delivery_mail_address }, ${x.second_person.delivery_mail_city}
           % elif x.second_person.delivery_mail_address != "" and x.second_person.delivery_mail_state != "":
           ${x.second_person.delivery_mail_address }, ${ state_name(x.second_person.delivery_mail_state) }
           % elif x.second_person.delivery_mail_city != "" and x.second_person.delivery_mail_state != "":
@@ -1401,7 +1395,7 @@ attachment:
           % if delivery_parties[0].delivery_mail_address != "" and delivery_parties[0].delivery_mail_city != "" and delivery_parties[0].delivery_mail_state != "":
           ${delivery_parties[0].delivery_mail_address }, ${delivery_parties[0].delivery_mail_city}, ${ state_name(delivery_parties[0].delivery_mail_state) }
           % elif delivery_parties[0].delivery_mail_address != "" and delivery_parties[0].delivery_mail_city != "":
-          ${delivery_parties[0].delivery_mail_address }, {delivery_parties[0].delivery_mail_city}
+          ${delivery_parties[0].delivery_mail_address }, ${delivery_parties[0].delivery_mail_city}
           % elif delivery_parties[0].delivery_mail_address != "" and delivery_parties[0].delivery_mail_state != "":
           ${delivery_parties[0].delivery_mail_address }, ${ state_name(delivery_parties[0].delivery_mail_state) }
           % elif delivery_parties[0].delivery_mail_city != "" and delivery_parties[0].delivery_mail_state != "":
@@ -1444,7 +1438,7 @@ attachment:
           % if delivery_parties[1].delivery_mail_address != "" and delivery_parties[1].delivery_mail_city != "" and delivery_parties[1].delivery_mail_state != "":
           ${delivery_parties[1].delivery_mail_address }, ${delivery_parties[1].delivery_mail_city}, ${ state_name(delivery_parties[1].delivery_mail_state) }
           % elif delivery_parties[1].delivery_mail_address != "" and delivery_parties[1].delivery_mail_city != "":
-          ${delivery_parties[1].delivery_mail_address }, {delivery_parties[1].delivery_mail_city}
+          ${delivery_parties[1].delivery_mail_address }, ${delivery_parties[1].delivery_mail_city}
           % elif delivery_parties[1].delivery_mail_address != "" and delivery_parties[1].delivery_mail_state != "":
           ${delivery_parties[1].delivery_mail_address }, ${ state_name(delivery_parties[1].delivery_mail_state) }
           % elif delivery_parties[1].delivery_mail_city != "" and delivery_parties[1].delivery_mail_state != "":
@@ -1496,7 +1490,7 @@ review:
       % endfor
   - Edit: in_re_check
     button: |
-      **Does the court case have "In re:" in the name?**  
+      **Does the court case have "In re:" in the name?**
       ${word(yesno(in_re_check))}
   - Edit: in_re_label
     button: |
@@ -1736,7 +1730,7 @@ review:
       % endfor
   - Edit: in_re_check
     button: |
-      **Does the court case have "In re:" in the name?**  
+      **Does the court case have "In re:" in the name?**
       ${word(yesno(in_re_check))}
   - Edit: in_re_label
     button: |
